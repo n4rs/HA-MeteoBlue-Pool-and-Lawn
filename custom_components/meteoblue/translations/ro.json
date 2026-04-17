@@ -1,0 +1,102 @@
+{
+    "config": {
+        "initiate_flow": {
+            "user": "Adaugă cheie API"
+        },
+        "step": {
+            "user": {
+                "description": "Dacă ai nevoie de ajutor cu configurarea, consultă aici: {documentation_url}",
+                "data": {
+                    "name": "Nume",
+                    "api_key": "Cheie API"
+                }
+            }
+        },
+        "error": {
+            "auth": "Cheie API invalidă.",
+            "connection": "Nu se poate conecta la server.",
+            "unknown": "A apărut o eroare necunoscută."
+        },
+        "abort": {
+            "already_configured": "Această cheie API este deja configurată."
+        }
+    },
+    "config_subentries": {
+        "forecast_location": {
+            "initiate_flow": {
+                "user": "Adaugă locație pentru prognoză",
+                "reconfigure": "Reconfigurează locația pentru prognoză"
+            },
+            "entry_type": "Locație pentru prognoză",
+            "step": {
+                "user": {
+                    "description": "Denumește locația și alege dacă să folosești locația din Home Assistant sau una personalizată.",
+                    "data": {
+                        "name": "Nume",
+                        "location_mode": "Sursa locației"
+                    }
+                },
+                "location": {
+                    "description": "Alege locația pentru care să fie obținută prognoza.",
+                    "data": {
+                        "location": "Locație",
+                        "elevation": "Altitudine deasupra nivelului mării (m, opțional)"
+                    }
+                },
+                "forecast": {
+                    "description": "Configurează prognoza meteo. Fiecare cerere costă credite MeteoBlue: zilnic 4000, orar 8000.",
+                    "data": {
+                        "enable_forecast": "Activează prognoza meteo",
+                        "forecast_type": "Tip de prognoză",
+                        "forecast_update_interval": "Interval de actualizare a prognozei"
+                    },
+                    "data_description": {
+                        "enable_forecast": "Activează entitatea meteo care expune condițiile actuale și prognoza. Dezactiveaz-o dacă vrei doar imaginea meteogramei.",
+                        "forecast_type": "Zilnic (4000 credite/cerere) sau orar (8000 credite/cerere). Când este selectat orar, prognoza zilnică este sintetizată din datele orare — nu este nevoie de o cerere suplimentară.",
+                        "forecast_update_interval": "Cât de des se obține prognoza. Intervalele mai scurte consumă credite mai repede. Minim 6 ore."
+                    }
+                },
+                "meteogram": {
+                    "description": "Configurează imaginea meteogramei. Fiecare cerere costă 16000 de credite MeteoBlue.",
+                    "data": {
+                        "enable_meteogram": "Activează meteograma",
+                        "meteogram_update_interval": "Interval de actualizare a meteogramei"
+                    },
+                    "data_description": {
+                        "enable_meteogram": "Activează obținerea unei meteograme de 7 zile.",
+                        "meteogram_update_interval": "Cât de des se obține meteograma. Fiecare cerere costă 16000 de credite. Minim 6 ore."
+                    }
+                },
+                "reconfigure": {
+                    "description": "Denumește locația și alege dacă să folosești locația din Home Assistant sau una personalizată.",
+                    "data": {
+                        "name": "Nume",
+                        "location_mode": "Sursa locației"
+                    }
+                }
+            },
+            "error": {
+                "location_required": "Te rugăm să alegi o locație sau să comuți la \"Folosește locația din Home Assistant\".",
+                "update_interval_too_short": "Intervalul de actualizare trebuie să fie de cel puțin 6 ore."
+            },
+            "abort": {
+                "already_configured": "Această locație este deja configurată.",
+                "reconfigure_successful": "Reconfigurarea a reușit."
+            }
+        }
+    },
+    "selector": {
+        "location_mode": {
+            "options": {
+                "auto": "Folosește locația din Home Assistant",
+                "custom": "Alege locația"
+            }
+        },
+        "forecast_type": {
+            "options": {
+                "daily": "Zilnic",
+                "hourly": "Orar"
+            }
+        }
+    }
+}

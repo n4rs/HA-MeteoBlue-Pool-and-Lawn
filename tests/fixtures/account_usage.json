@@ -1,0 +1,27 @@
+{
+  "items": [
+    {
+      "request_count": 1,
+      "request_credits": 8000,
+      "request_date": "2026-04-20",
+      "request_type": "basic-15min"
+    },
+    {
+      "request_count": 1,
+      "request_credits": 8000,
+      "request_date": "2026-04-20",
+      "request_type": "basic-1h"
+    },
+    {
+      "request_count": 2,
+      "request_credits": 8000,
+      "request_date": "2026-04-20",
+      "request_type": "basic-day"
+    }
+  ],
+  "metadata": {
+    "page": 1,
+    "per": 10,
+    "total": 3
+  }
+}

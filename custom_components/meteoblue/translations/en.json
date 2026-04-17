@@ -1,0 +1,102 @@
+{
+    "config": {
+        "initiate_flow": {
+            "user": "Add API key"
+        },
+        "step": {
+            "user": {
+                "description": "If you need help with the configuration have a look here: {documentation_url}",
+                "data": {
+                    "name": "Name",
+                    "api_key": "API Key"
+                }
+            }
+        },
+        "error": {
+            "auth": "Invalid API key.",
+            "connection": "Unable to connect to the server.",
+            "unknown": "Unknown error occurred."
+        },
+        "abort": {
+            "already_configured": "This API key is already configured."
+        }
+    },
+    "config_subentries": {
+        "forecast_location": {
+            "initiate_flow": {
+                "user": "Add forecast location",
+                "reconfigure": "Reconfigure forecast location"
+            },
+            "entry_type": "Forecast Location",
+            "step": {
+                "user": {
+                    "description": "Name your location and choose whether to use Home Assistant's location or a custom one.",
+                    "data": {
+                        "name": "Name",
+                        "location_mode": "Location source"
+                    }
+                },
+                "location": {
+                    "description": "Pick the location for which to fetch the forecast.",
+                    "data": {
+                        "location": "Location",
+                        "elevation": "Elevation above sea level (m, optional)"
+                    }
+                },
+                "forecast": {
+                    "description": "Configure the weather forecast. Each request costs MeteoBlue credits: daily 4000, hourly 8000.",
+                    "data": {
+                        "enable_forecast": "Enable weather forecast",
+                        "forecast_type": "Forecast type",
+                        "forecast_update_interval": "Forecast update interval"
+                    },
+                    "data_description": {
+                        "enable_forecast": "Enable the weather entity that exposes current conditions and the forecast. Disable it if you only want the meteogram image.",
+                        "forecast_type": "Daily (4000 credits/request) or Hourly (8000 credits/request). When Hourly is selected, the daily forecast is synthesized from hourly data — no extra request is needed.",
+                        "forecast_update_interval": "How often to fetch the forecast. Shorter intervals consume credits faster. Minimum 6 hours."
+                    }
+                },
+                "meteogram": {
+                    "description": "Configure the meteogram image. Each request costs 16000 MeteoBlue credits.",
+                    "data": {
+                        "enable_meteogram": "Enable meteogram",
+                        "meteogram_update_interval": "Meteogram update interval"
+                    },
+                    "data_description": {
+                        "enable_meteogram": "Enable fetching of a 7-day meteogram.",
+                        "meteogram_update_interval": "How often to fetch the meteogram. Each request costs 16000 credits. Minimum 6 hours."
+                    }
+                },
+                "reconfigure": {
+                    "description": "Name your location and choose whether to use Home Assistant's location or a custom one.",
+                    "data": {
+                        "name": "Name",
+                        "location_mode": "Location source"
+                    }
+                }
+            },
+            "error": {
+                "location_required": "Please pick a location, or switch to \"Use Home Assistant location\".",
+                "update_interval_too_short": "Update interval must be at least 6 hours."
+            },
+            "abort": {
+                "already_configured": "This location is already configured.",
+                "reconfigure_successful": "Re-configuration was successful."
+            }
+        }
+    },
+    "selector": {
+        "location_mode": {
+            "options": {
+                "auto": "Use Home Assistant location",
+                "custom": "Choose location"
+            }
+        },
+        "forecast_type": {
+            "options": {
+                "daily": "Daily",
+                "hourly": "Hourly"
+            }
+        }
+    }
+}

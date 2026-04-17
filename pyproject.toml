@@ -1,0 +1,31 @@
+[project]
+name = "HomeAssistant-MeteoBlue"
+version = "0.1.0"
+description = "MeteoBlue integration for Home Assistant"
+readme = "README.md"
+requires-python = ">=3.13.2"
+dependencies = [
+    "colorlog==6.10.1",
+    "homeassistant>=2025.3.0",
+    "httpx",
+    "isal>=1.8.0",
+    "zlib-ng>=1.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "numpy>=2.0",
+    "Pillow>=10.0",
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.15.11",
+    "ty>=0.0.31",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["custom_components"]
+
+[tool.ty.environment]
+extra-paths = ["./custom_components"]

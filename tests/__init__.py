@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 # Copyright 2026 Dan Keder
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +16,3 @@
 # https://github.com/ludeeus/integration_blueprint/, which is licensed under
 # the MIT License.
 #
-
-set -e
-
-cd "$(dirname "$0")/.."
-
-uv run ruff format .
-uv run ruff check . --fix

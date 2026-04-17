@@ -1,5 +1,5 @@
 {
-    "name": "Integration blueprint",
-    "homeassistant": "2026.3.2",
+    "name": "MeteoBlue",
+    "homeassistant": "2025.3.0",
     "hacs": "2.0.5"
 }

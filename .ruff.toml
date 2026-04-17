@@ -15,6 +15,16 @@ ignore = [
     "ISC001", # incompatible with formatter
 ]
 
+[lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",    # asserts are expected in tests
+    "ARG001",  # unused fixture/handler arguments are common in tests
+    "PLR2004", # magic values are fine in assertions
+    "D",       # test files do not need exhaustive docstrings
+    "EM101",   # inline string messages are fine in test-only exceptions
+    "TRY003",  # same: short inline messages in tests are readable
+]
+
 [lint.flake8-pytest-style]
 fixture-parentheses = false
 

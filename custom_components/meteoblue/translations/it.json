@@ -1,0 +1,102 @@
+{
+    "config": {
+        "initiate_flow": {
+            "user": "Aggiungi chiave API"
+        },
+        "step": {
+            "user": {
+                "description": "Se hai bisogno di aiuto con la configurazione, consulta: {documentation_url}",
+                "data": {
+                    "name": "Nome",
+                    "api_key": "Chiave API"
+                }
+            }
+        },
+        "error": {
+            "auth": "Chiave API non valida.",
+            "connection": "Impossibile connettersi al server.",
+            "unknown": "Si è verificato un errore sconosciuto."
+        },
+        "abort": {
+            "already_configured": "Questa chiave API è già configurata."
+        }
+    },
+    "config_subentries": {
+        "forecast_location": {
+            "initiate_flow": {
+                "user": "Aggiungi località di previsione",
+                "reconfigure": "Riconfigura località di previsione"
+            },
+            "entry_type": "Località di previsione",
+            "step": {
+                "user": {
+                    "description": "Assegna un nome alla località e scegli se usare la posizione di Home Assistant o una personalizzata.",
+                    "data": {
+                        "name": "Nome",
+                        "location_mode": "Origine della posizione"
+                    }
+                },
+                "location": {
+                    "description": "Scegli la località per cui ottenere le previsioni.",
+                    "data": {
+                        "location": "Località",
+                        "elevation": "Altitudine sul livello del mare (m, opzionale)"
+                    }
+                },
+                "forecast": {
+                    "description": "Configura le previsioni meteo. Ogni richiesta costa crediti MeteoBlue: giornaliera 4000, oraria 8000.",
+                    "data": {
+                        "enable_forecast": "Abilita previsioni meteo",
+                        "forecast_type": "Tipo di previsione",
+                        "forecast_update_interval": "Intervallo di aggiornamento delle previsioni"
+                    },
+                    "data_description": {
+                        "enable_forecast": "Abilita l'entità meteo che espone le condizioni attuali e le previsioni. Disabilitala se vuoi solo l'immagine del meteogramma.",
+                        "forecast_type": "Giornaliera (4000 crediti/richiesta) oppure oraria (8000 crediti/richiesta). Quando è selezionata Oraria, la previsione giornaliera viene calcolata dai dati orari — non è necessaria una richiesta aggiuntiva.",
+                        "forecast_update_interval": "Con quale frequenza recuperare le previsioni. Intervalli più brevi consumano crediti più velocemente. Minimo 6 ore."
+                    }
+                },
+                "meteogram": {
+                    "description": "Configura l'immagine del meteogramma. Ogni richiesta costa 16000 crediti MeteoBlue.",
+                    "data": {
+                        "enable_meteogram": "Abilita meteogramma",
+                        "meteogram_update_interval": "Intervallo di aggiornamento del meteogramma"
+                    },
+                    "data_description": {
+                        "enable_meteogram": "Abilita il recupero di un meteogramma di 7 giorni.",
+                        "meteogram_update_interval": "Con quale frequenza recuperare il meteogramma. Ogni richiesta costa 16000 crediti. Minimo 6 ore."
+                    }
+                },
+                "reconfigure": {
+                    "description": "Assegna un nome alla località e scegli se usare la posizione di Home Assistant o una personalizzata.",
+                    "data": {
+                        "name": "Nome",
+                        "location_mode": "Origine della posizione"
+                    }
+                }
+            },
+            "error": {
+                "location_required": "Seleziona una località oppure passa a \"Usa la posizione di Home Assistant\".",
+                "update_interval_too_short": "L'intervallo di aggiornamento deve essere di almeno 6 ore."
+            },
+            "abort": {
+                "already_configured": "Questa località è già configurata.",
+                "reconfigure_successful": "La riconfigurazione è stata completata con successo."
+            }
+        }
+    },
+    "selector": {
+        "location_mode": {
+            "options": {
+                "auto": "Usa la posizione di Home Assistant",
+                "custom": "Scegli località"
+            }
+        },
+        "forecast_type": {
+            "options": {
+                "daily": "Giornaliera",
+                "hourly": "Oraria"
+            }
+        }
+    }
+}
