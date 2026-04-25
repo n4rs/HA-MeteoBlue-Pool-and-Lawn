@@ -9,5 +9,5 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/dankeder/HomeAssistant-MeteoBlue/issues",
   "requirements": ["python-dateutil", "Pillow", "numpy"],
-  "version": "0.1.1"
+  "version": "0.1.2"
 }
