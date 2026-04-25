@@ -20,6 +20,7 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.weather import (
@@ -225,6 +226,7 @@ class MeteoBlueWeather(MeteoBlueLocationEntity, WeatherEntity):
         if not data:
             return None
         entries = data.get("forecast_data_daily", {})
+        cutoff = dt_util.now() - timedelta(days=1)
         return [
             Forecast(
                 datetime=key.isoformat(),
@@ -237,6 +239,7 @@ class MeteoBlueWeather(MeteoBlueLocationEntity, WeatherEntity):
                 wind_bearing=entries[key].get("winddirection"),
             )
             for key in sorted(entries)
+            if key > cutoff
         ]
 
     async def async_forecast_hourly(self) -> list[Forecast] | None:
@@ -245,6 +248,7 @@ class MeteoBlueWeather(MeteoBlueLocationEntity, WeatherEntity):
         if not data:
             return None
         entries = data.get("forecast_data_hourly", {})
+        cutoff = dt_util.now() - timedelta(hours=1)
         return [
             Forecast(
                 datetime=key.isoformat(),
@@ -259,4 +263,5 @@ class MeteoBlueWeather(MeteoBlueLocationEntity, WeatherEntity):
                 humidity=entries[key].get("relativehumidity"),
             )
             for key in sorted(entries)
+            if key > cutoff
         ]

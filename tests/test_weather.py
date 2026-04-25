@@ -361,7 +361,9 @@ def test_daily_type_uses_daily_keys_even_if_hourly_present(
 async def test_async_forecast_daily_builds_entries(
     make_weather: Callable[..., MeteoBlueWeather],
     daily_forecast_payload: dict[str, Any],
+    freeze_now: Callable[[datetime], None],
 ) -> None:
+    freeze_now(datetime(2026, 4, 16, 0, 0, tzinfo=CEST))
     weather = make_weather(daily_forecast_payload)
     result = await weather.async_forecast_daily()
 
@@ -395,7 +397,9 @@ async def test_async_forecast_daily_returns_none_when_no_data(
 async def test_async_forecast_daily_aggregates_from_hourly(
     make_weather: Callable[..., MeteoBlueWeather],
     hourly_only_forecast_payload: dict[str, Any],
+    freeze_now: Callable[[datetime], None],
 ) -> None:
+    freeze_now(datetime(2026, 4, 20, 0, 0, tzinfo=CEST))
     weather = make_weather(hourly_only_forecast_payload, FORECAST_TYPE_HOURLY)
     result = await weather.async_forecast_daily()
 
@@ -423,8 +427,10 @@ async def test_async_forecast_daily_aggregates_from_hourly(
 async def test_async_forecast_daily_skips_partial_day(
     make_weather: Callable[..., MeteoBlueWeather],
     hourly_only_forecast_payload: dict[str, Any],
+    freeze_now: Callable[[datetime], None],
 ) -> None:
     """A day without a 12:00 entry is skipped rather than aggregated."""
+    freeze_now(datetime(2026, 4, 20, 0, 0, tzinfo=CEST))
     weather = make_weather(hourly_only_forecast_payload, FORECAST_TYPE_HOURLY)
     result = await weather.async_forecast_daily()
 
@@ -448,8 +454,10 @@ async def test_async_forecast_daily_skips_partial_day(
 async def test_async_forecast_daily_prefers_daily_when_both_present(
     make_weather: Callable[..., MeteoBlueWeather],
     hourly_forecast_payload: dict[str, Any],
+    freeze_now: Callable[[datetime], None],
 ) -> None:
     """When the API returns data_day, those values win over hourly aggregates."""
+    freeze_now(datetime(2026, 4, 16, 0, 0, tzinfo=CEST))
     weather = make_weather(hourly_forecast_payload, FORECAST_TYPE_HOURLY)
     result = await weather.async_forecast_daily()
 
@@ -475,7 +483,9 @@ async def test_async_forecast_daily_returns_empty_when_keys_missing(
 async def test_async_forecast_hourly_builds_entries(
     make_weather: Callable[..., MeteoBlueWeather],
     hourly_forecast_payload: dict[str, Any],
+    freeze_now: Callable[[datetime], None],
 ) -> None:
+    freeze_now(datetime(2026, 4, 20, 0, 0, tzinfo=CEST))
     weather = make_weather(hourly_forecast_payload, FORECAST_TYPE_HOURLY)
     result = await weather.async_forecast_hourly()
 
@@ -512,10 +522,79 @@ async def test_async_forecast_hourly_returns_none_when_no_data(
 async def test_async_forecast_hourly_returns_entries_regardless_of_forecast_type(
     make_weather: Callable[..., MeteoBlueWeather],
     hourly_forecast_payload: dict[str, Any],
+    freeze_now: Callable[[datetime], None],
 ) -> None:
     # The method itself no longer gates on forecast type; gating lives in
     # supported_features, so HA only calls it when FORECAST_HOURLY is declared.
+    freeze_now(datetime(2026, 4, 20, 0, 0, tzinfo=CEST))
     weather = make_weather(hourly_forecast_payload, FORECAST_TYPE_DAILY)
     result = await weather.async_forecast_hourly()
     assert result is not None
     assert len(result) == len(hourly_forecast_payload["forecast_data_hourly"])
+
+
+async def test_async_forecast_hourly_filters_past_entries(
+    make_weather: Callable[..., MeteoBlueWeather],
+    hourly_forecast_payload: dict[str, Any],
+    freeze_now: Callable[[datetime], None],
+) -> None:
+    """Past hourly entries are dropped; the current hour is kept."""
+    hourly = hourly_forecast_payload["forecast_data_hourly"]
+    keys = sorted(hourly)
+    # Freeze 30 minutes into the entry at CURRENT_HOURLY_INDEX (06:00 → 06:30):
+    # that entry covers the current hour and must be kept; entries before it
+    # have already passed and must be excluded.
+    current_key = keys[CURRENT_HOURLY_INDEX]
+    freeze_now(current_key.replace(minute=30))
+
+    weather = make_weather(hourly_forecast_payload, FORECAST_TYPE_HOURLY)
+    result = await weather.async_forecast_hourly()
+
+    assert result is not None
+    expected_keys = [k for k in keys if k >= current_key]
+    assert [f["datetime"] for f in result] == [k.isoformat() for k in expected_keys]
+    assert result[0]["datetime"] == current_key.isoformat()
+
+
+async def test_async_forecast_daily_filters_past_entries(
+    make_weather: Callable[..., MeteoBlueWeather],
+    daily_forecast_payload: dict[str, Any],
+    freeze_now: Callable[[datetime], None],
+) -> None:
+    """Past daily entries are dropped; today's entry is kept."""
+    daily = daily_forecast_payload["forecast_data_daily"]
+    keys = sorted(daily)
+    # CURRENT_DAILY_NOW is 2026-04-19 12:00; the 2026-04-19 midnight entry is
+    # the current day and must be kept, while 2026-04-16..04-18 must be dropped.
+    freeze_now(CURRENT_DAILY_NOW)
+
+    weather = make_weather(daily_forecast_payload)
+    result = await weather.async_forecast_daily()
+
+    assert result is not None
+    today_key = keys[CURRENT_DAILY_INDEX]
+    expected_keys = [k for k in keys if k >= today_key]
+    assert [f["datetime"] for f in result] == [k.isoformat() for k in expected_keys]
+    assert result[0]["datetime"] == today_key.isoformat()
+
+
+async def test_async_forecast_hourly_returns_empty_when_all_past(
+    make_weather: Callable[..., MeteoBlueWeather],
+    hourly_forecast_payload: dict[str, Any],
+    freeze_now: Callable[[datetime], None],
+) -> None:
+    """When every hourly entry has already passed, an empty list is returned."""
+    freeze_now(datetime(2099, 1, 1, tzinfo=CEST))
+    weather = make_weather(hourly_forecast_payload, FORECAST_TYPE_HOURLY)
+    assert await weather.async_forecast_hourly() == []
+
+
+async def test_async_forecast_daily_returns_empty_when_all_past(
+    make_weather: Callable[..., MeteoBlueWeather],
+    daily_forecast_payload: dict[str, Any],
+    freeze_now: Callable[[datetime], None],
+) -> None:
+    """When every daily entry has already passed, an empty list is returned."""
+    freeze_now(datetime(2099, 1, 1, tzinfo=CEST))
+    weather = make_weather(daily_forecast_payload)
+    assert await weather.async_forecast_daily() == []
