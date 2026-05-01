@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from datetime import UTC, date, datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any, Literal
@@ -202,6 +203,38 @@ class MeteoBlueApiClient:
             ) from exception
 
 
+def _shift_forecast_dates(payload: dict) -> dict:
+    """Shift fixture dates so the forecast starts today (local). Mutates in place."""
+    metadata = payload["metadata"]
+    data_day = payload["data_day"]
+    data_1h = payload["data_1h"]
+
+    if not data_day.get("time"):
+        return payload
+
+    utc_offset_hours = float(metadata.get("utc_timeoffset", 0.0))
+    today_local = (datetime.now(UTC) + timedelta(hours=utc_offset_hours)).date()
+    first_day = date.fromisoformat(data_day["time"][0])
+    delta = timedelta(days=(today_local - first_day).days)
+    if delta == timedelta(0):
+        return payload
+
+    data_day["time"] = [
+        (date.fromisoformat(d) + delta).isoformat() for d in data_day["time"]
+    ]
+    data_1h["time"] = [
+        (datetime.strptime(t, "%Y-%m-%d %H:%M") + delta).strftime("%Y-%m-%d %H:%M")  # noqa: DTZ007
+        for t in data_1h.get("time", [])
+    ]
+    for key in ("modelrun_utc", "modelrun_updatetime_utc"):
+        value = metadata.get(key)
+        if value:
+            metadata[key] = (
+                datetime.strptime(value, "%Y-%m-%d %H:%M") + delta  # noqa: DTZ007
+            ).strftime("%Y-%m-%d %H:%M")
+    return payload
+
+
 class FakeMeteoBlueApiClient(MeteoBlueApiClient):
     """Drop-in MeteoBlue API client that returns a canned response."""
 
@@ -216,7 +249,8 @@ class FakeMeteoBlueApiClient(MeteoBlueApiClient):
         fixture_path = (
             Path(__file__).parent.parent.parent / "tests" / "fixtures" / "forecast.json"
         )
-        return json.loads(await asyncio.to_thread(fixture_path.read_text))
+        payload = json.loads(await asyncio.to_thread(fixture_path.read_text))
+        return _shift_forecast_dates(payload)
 
     async def async_get_meteogram_extended(
         self,
