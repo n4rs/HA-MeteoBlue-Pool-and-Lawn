@@ -59,6 +59,7 @@ def test_reshape_splits_hourly_and_daily_sections() -> None:
             "temperature": [5.0, 4.5],
             "precipitation": [0.1, 0.0],
             "pictocode": [31, 7],
+            "isdaylight": [0, 0],
         },
         "data_day": {
             "time": ["2026-04-20"],
@@ -83,6 +84,7 @@ def test_reshape_splits_hourly_and_daily_sections() -> None:
     assert hourly_midnight["temperature"] == 5.0
     assert hourly_midnight["precipitation"] == 0.1
     assert "pictocode" not in hourly_midnight
+    assert "isdaylight" not in hourly_midnight
     assert hourly_midnight["condition"] == PICTOCODE_HOURLY_TO_CONDITION[31]
 
     next_hour = result["forecast_data_hourly"][next_hour_key]
@@ -134,6 +136,7 @@ def test_reshape_with_only_hourly_data() -> None:
             "time": ["2026-04-20 00:00", "2026-04-20 01:00"],
             "temperature": [5.0, 4.5],
             "pictocode": [31, 22],
+            "isdaylight": [0, 0],
         },
     }
 
@@ -144,6 +147,7 @@ def test_reshape_with_only_hourly_data() -> None:
 
     assert set(result["forecast_data_hourly"]) == {hour_zero, hour_one}
     assert result["forecast_data_hourly"][hour_one]["temperature"] == 4.5
+    assert "isdaylight" not in result["forecast_data_hourly"][hour_zero]
     assert (
         result["forecast_data_hourly"][hour_zero]["condition"]
         == PICTOCODE_HOURLY_TO_CONDITION[31]
@@ -152,6 +156,59 @@ def test_reshape_with_only_hourly_data() -> None:
         result["forecast_data_hourly"][hour_one]["condition"]
         == PICTOCODE_HOURLY_TO_CONDITION[22]
     )
+
+
+def test_reshape_hourly_sunny_at_night_becomes_clear_night() -> None:
+    """A "sunny" pictocode resolves to "clear-night" when the hour is non-daylight."""
+    raw: dict[str, Any] = {
+        "metadata": METADATA_CEST,
+        "units": {},
+        "data_1h": {
+            "time": ["2026-04-20 00:00"],
+            "pictocode": [1],
+            "isdaylight": [0],
+        },
+    }
+
+    result = _reshape_forecast_payload(raw)
+
+    hour_zero = datetime(2026, 4, 20, 0, 0, tzinfo=CEST)
+    assert result["forecast_data_hourly"][hour_zero]["condition"] == "clear-night"
+
+
+def test_reshape_hourly_sunny_during_day_stays_sunny() -> None:
+    """A "sunny" pictocode resolves to "sunny" when the hour is daylight."""
+    raw: dict[str, Any] = {
+        "metadata": METADATA_CEST,
+        "units": {},
+        "data_1h": {
+            "time": ["2026-04-20 12:00"],
+            "pictocode": [1],
+            "isdaylight": [1],
+        },
+    }
+
+    result = _reshape_forecast_payload(raw)
+
+    hour_noon = datetime(2026, 4, 20, 12, 0, tzinfo=CEST)
+    assert result["forecast_data_hourly"][hour_noon]["condition"] == "sunny"
+
+
+def test_reshape_hourly_without_isdaylight_keeps_sunny() -> None:
+    """If isdaylight is absent, "sunny" is preserved (no day/night refinement)."""
+    raw: dict[str, Any] = {
+        "metadata": METADATA_CEST,
+        "units": {},
+        "data_1h": {
+            "time": ["2026-04-20 00:00"],
+            "pictocode": [1],
+        },
+    }
+
+    result = _reshape_forecast_payload(raw)
+
+    hour_zero = datetime(2026, 4, 20, 0, 0, tzinfo=CEST)
+    assert result["forecast_data_hourly"][hour_zero]["condition"] == "sunny"
 
 
 def test_reshape_synthesizes_daily_from_hourly_when_data_day_absent() -> None:

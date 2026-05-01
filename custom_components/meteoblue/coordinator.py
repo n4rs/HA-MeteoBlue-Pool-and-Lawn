@@ -190,14 +190,25 @@ def _parse_section(
     if not section:
         return entries
     times = section.get("time", [])
+    isdaylight = section.get("isdaylight")
     for i, ts in enumerate(times):
         key = dateutil_parse(ts).replace(tzinfo=tz)
         entry: dict[str, Any] = {}
         for field, values in section.items():
-            if field == "time":
+            if field in ("time", "isdaylight"):
                 continue
             if field == "pictocode":
-                entry["condition"] = mapping.get(int(values[i]))
+                condition = mapping.get(int(values[i]))
+                # MeteoBlue's hourly pictogram set has no separate code for a
+                # clear night, so map "sunny" to "clear-night" when the API
+                # marks the hour as non-daylight.
+                if (
+                    condition == "sunny"
+                    and isdaylight is not None
+                    and not isdaylight[i]
+                ):
+                    condition = "clear-night"
+                entry["condition"] = condition
             else:
                 entry[field] = values[i]
         entries[key] = entry
