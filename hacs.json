@@ -1,5 +1,6 @@
 {
     "name": "MeteoBlue",
     "homeassistant": "2025.3.0",
-    "hacs": "2.0.5"
+    "hacs": "2.0.5",
+    "hide_default_branch": false"
 }
