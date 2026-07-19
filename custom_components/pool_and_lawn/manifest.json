@@ -5,7 +5,7 @@
     "@n4rs"
   ],
   "config_flow": true,
-  "documentation": "https://github.com/n4rs/HA-MeteoBlue-Pool-and-Lawn/blob/main/README.md",
+  "documentation": "https://github.com/n4rs/HA-MeteoBlue-Pool-and-Lawn/blob/master/README.md",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/n4rs/HA-MeteoBlue-Pool-and-Lawn/issues",
   "requirements": [
