@@ -23,21 +23,41 @@
 
 from __future__ import annotations
 
+from datetime import date, timedelta, tzinfo
+from functools import partial
 from typing import TYPE_CHECKING
+from zoneinfo import ZoneInfo
 
 from homeassistant.components.sensor import (
     SensorEntity,
     SensorEntityDescription,
     SensorStateClass,
 )
+from homeassistant.const import CONF_LATITUDE, CONF_LONGITUDE
+from homeassistant.core import callback
+from homeassistant.helpers.event import async_track_time_change
+from homeassistant.util import dt as dt_util
 
-from .const import SUBENTRY_TYPE_FORECAST_LOCATION
-from .entity import MeteoBlueAccountEntity
+from .const import (
+    CONF_FORECAST_TYPE,
+    CONF_LOCATION_MODE,
+    FORECAST_TYPE_HOURLY,
+    LOCATION_MODE_CUSTOM,
+    SUBENTRY_TYPE_FORECAST_LOCATION,
+)
+from .entity import MeteoBlueAccountEntity, MeteoBlueLocationEntity
+from .irrigation import (
+    IRRIGATION_FORECAST_DAYS,
+    IrrigationForecastDay,
+    astral_solar_period,
+    calculate_irrigation_forecast,
+)
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
+    from .coordinator import ForecastCoordinator
     from .data import MeteoBlueConfigEntry
 
 ENTITY_DESCRIPTIONS = (
@@ -50,26 +70,77 @@ ENTITY_DESCRIPTIONS = (
     ),
 )
 
+IRRIGATION_ENTITY_DESCRIPTIONS = tuple(
+    SensorEntityDescription(
+        key=f"irrigation_level_{offset}",
+        translation_key=(
+            "irrigation_level_today" if offset == 0 else "irrigation_level_future"
+        ),
+        icon="mdi:sprinkler-variant",
+    )
+    for offset in range(IRRIGATION_FORECAST_DAYS)
+)
+
 
 async def async_setup_entry(
-    hass: HomeAssistant,  # noqa: ARG001
+    hass: HomeAssistant,
     entry: MeteoBlueConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Set up an account-usage sensor on each location subentry device."""
+    """Set up account usage and irrigation sensors for each location."""
     for subentry in entry.subentries.values():
         if subentry.subentry_type != SUBENTRY_TYPE_FORECAST_LOCATION:
             continue
-        async_add_entities(
-            (
-                MeteoBlueCreditsUsed(
-                    coordinator=entry.runtime_data.account_coordinator,
-                    subentry=subentry,
+        entities: list[SensorEntity] = [
+            MeteoBlueCreditsUsed(
+                coordinator=entry.runtime_data.account_coordinator,
+                subentry=subentry,
+                entity_description=entity_description,
+                platform_domain="sensor",
+            )
+            for entity_description in ENTITY_DESCRIPTIONS
+        ]
+        coordinator = entry.runtime_data.location_coordinators.get(subentry.subentry_id)
+        irrigation_entities: list[MeteoBlueIrrigationLevel] = []
+        if (
+            coordinator is not None
+            and subentry.data.get(CONF_FORECAST_TYPE) == FORECAST_TYPE_HOURLY
+        ):
+            manager = IrrigationForecastManager(hass, coordinator)
+            irrigation_entities = [
+                MeteoBlueIrrigationLevel(
+                    manager=manager,
+                    forecast_day_offset=offset,
                     entity_description=entity_description,
-                    platform_domain="sensor",
                 )
-                for entity_description in ENTITY_DESCRIPTIONS
-            ),
+                for offset, entity_description in enumerate(
+                    IRRIGATION_ENTITY_DESCRIPTIONS
+                )
+            ]
+            entities.extend(irrigation_entities)
+
+            @callback
+            def _refresh_at_midnight(
+                _now: object,
+                manager: IrrigationForecastManager = manager,
+                sensors: list[MeteoBlueIrrigationLevel] = irrigation_entities,
+            ) -> None:
+                manager.invalidate()
+                for sensor in sensors:
+                    sensor.async_write_ha_state()
+
+            entry.async_on_unload(
+                async_track_time_change(
+                    hass,
+                    _refresh_at_midnight,
+                    hour=0,
+                    minute=0,
+                    second=0,
+                )
+            )
+
+        async_add_entities(
+            entities,
             config_subentry_id=subentry.subentry_id,
         )
 
@@ -86,3 +157,125 @@ class MeteoBlueCreditsUsed(MeteoBlueAccountEntity, SensorEntity):
         if not items:
             return None
         return sum(item.get("request_credits", 0) for item in items)
+
+
+class IrrigationForecastManager:
+    """Cache pure irrigation calculations for one forecast coordinator."""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        coordinator: ForecastCoordinator,
+    ) -> None:
+        """Initialize the per-location irrigation calculation manager."""
+        self.hass = hass
+        self.coordinator = coordinator
+        data = coordinator.subentry.data
+        if data.get(CONF_LOCATION_MODE) == LOCATION_MODE_CUSTOM:
+            self.latitude = data[CONF_LATITUDE]
+            self.longitude = data[CONF_LONGITUDE]
+        else:
+            self.latitude = hass.config.latitude
+            self.longitude = hass.config.longitude
+        self._cache_key: tuple[int, date] | None = None
+        self._cached_days: list[IrrigationForecastDay] = []
+
+    def invalidate(self) -> None:
+        """Discard cached calculations without fetching new API data."""
+        self._cache_key = None
+
+    def get_day(self, offset: int) -> IrrigationForecastDay | None:
+        """Return the result assigned to a stable forecast-day offset."""
+        data = self.coordinator.data
+        if not data:
+            return None
+        hourly = data.get("forecast_data_hourly") or {}
+        timezone = self._local_timezone(hourly)
+        today = dt_util.now().astimezone(timezone).date()
+        cache_key = (id(data), today)
+        if self._cache_key != cache_key:
+            provider = partial(
+                astral_solar_period,
+                latitude=self.latitude,
+                longitude=self.longitude,
+            )
+            self._cached_days = calculate_irrigation_forecast(
+                hourly,
+                data.get("units") or {},
+                today,
+                timezone,
+                provider,
+            )
+            self._cache_key = cache_key
+        return self._cached_days[offset] if offset < len(self._cached_days) else None
+
+    def local_today(self) -> date:
+        """Return today in the forecast location's available timezone."""
+        data = self.coordinator.data or {}
+        hourly = data.get("forecast_data_hourly") or {}
+        timezone = self._local_timezone(hourly)
+        return dt_util.now().astimezone(timezone).date()
+
+    def _local_timezone(self, hourly: dict) -> tzinfo:
+        for timestamp in sorted(hourly):
+            if timestamp.tzinfo is not None:
+                return timestamp.tzinfo
+        return ZoneInfo(str(self.hass.config.time_zone))
+
+
+class MeteoBlueIrrigationLevel(MeteoBlueLocationEntity, SensorEntity):
+    """Sensor exposing one stable-offset daily irrigation level."""
+
+    _attr_suggested_display_precision = 0
+
+    def __init__(
+        self,
+        manager: IrrigationForecastManager,
+        forecast_day_offset: int,
+        entity_description: SensorEntityDescription,
+    ) -> None:
+        """Initialize an irrigation sensor tied to a location coordinator."""
+        super().__init__(
+            coordinator=manager.coordinator,
+            entity_description=entity_description,
+            platform_domain="sensor",
+        )
+        self.manager = manager
+        self.forecast_day_offset = forecast_day_offset
+        if forecast_day_offset > 0:
+            self._attr_translation_placeholders = {
+                "day_offset": str(forecast_day_offset)
+            }
+
+    @property
+    def available(self) -> bool:
+        """Return whether all essential inputs exist for this forecast day."""
+        day = self.manager.get_day(self.forecast_day_offset)
+        return super().available and day is not None and day.result is not None
+
+    @property
+    def native_value(self) -> int | None:
+        """Return an integer irrigation level from zero to five."""
+        day = self.manager.get_day(self.forecast_day_offset)
+        return day.result.final_level if day is not None and day.result else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, object]:
+        """Return diagnostics explaining the irrigation calculation."""
+        day = self.manager.get_day(self.forecast_day_offset)
+        if day is None:
+            return {
+                "forecast_date": (
+                    self.manager.local_today()
+                    + timedelta(days=self.forecast_day_offset)
+                ).isoformat(),
+                "forecast_day_offset": self.forecast_day_offset,
+                "unavailable_reason": "no_forecast_for_day",
+            }
+        if day.result is None:
+            return {
+                "forecast_date": day.forecast_date.isoformat(),
+                "forecast_day_offset": day.forecast_day_offset,
+                "unavailable_reason": day.unavailable_reason,
+            }
+        return day.result.as_attributes()

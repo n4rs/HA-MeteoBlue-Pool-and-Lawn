@@ -95,5 +95,15 @@
                 "hourly": "Hourly"
             }
         }
+    },
+    "entity": {
+        "sensor": {
+            "irrigation_level_today": {
+                "name": "Irrigation level — Today"
+            },
+            "irrigation_level_future": {
+                "name": "Irrigation level — In {day_offset} days"
+            }
+        }
     }
 }

@@ -23,8 +23,9 @@ for outdoor equipment, including:
 
 The integration provides the weather inputs for those calculations, such as
 hourly temperature, humidity, wind speed, wind gusts, precipitation,
-precipitation probability, and cloud coverage. The actual control logic can then
-be implemented with Home Assistant helpers, templates, automations, or scripts.
+precipitation probability, and cloud coverage. It also calculates a daily lawn
+irrigation-need level; other control logic can be implemented with Home Assistant
+helpers, templates, automations, or scripts.
 
 ## ✨ Features
 
@@ -37,6 +38,9 @@ be implemented with Home Assistant helpers, templates, automations, or scripts.
   - pool circulation pumps, including saltwater and standard pool setups;
   - salt chlorinators;
   - lawn irrigation duration.
+- **Seven-day lawn irrigation need** as stable sensors with integer levels from
+  0 (do not irrigate) to 5 (maximum need), calculated from the existing hourly
+  forecast without another API request.
 - 📊 **Credits sensor** showing total API credits consumed, so you can monitor
   your usage against your MeteoBlue plan.
 - 🗺️ **Multiple locations per API key.** Each location is added as a subentry and
@@ -107,6 +111,70 @@ For a location named *Home*, the integration creates:
 | -- | -- |
 | `weather.pool_and_lawn_home_weather` | Current conditions and forecast. Only created when **Enable forecast** is on. |
 | `sensor.pool_and_lawn_home_credits_used` | Total API credits consumed by your account, increasing over time. |
+| `sensor.pool_and_lawn_home_irrigation_level_0` | Irrigation need for today, from 0 to 5. Requires an hourly forecast. |
+| `sensor.pool_and_lawn_home_irrigation_level_1` … `_6` | Irrigation need for the following six local forecast dates. Missing offsets remain unavailable. |
+
+### Lawn irrigation need
+
+An hourly location creates seven fixed sensor entities, with offsets `0` through
+`6`. Their unique IDs contain the location subentry ID and offset, so the same
+entities are reused as dates advance. The concrete local date is exposed through
+the `forecast_date` attribute. Sensors update with the existing forecast
+coordinator and are recalculated locally at midnight; they make no additional
+MeteoBlue requests.
+
+The level has this meaning:
+
+| Level | Meaning |
+| --: | -- |
+| 0 | Do not irrigate |
+| 1 | Residual irrigation |
+| 2 | Reduced irrigation |
+| 3 | Moderate irrigation |
+| 4 | High irrigation |
+| 5 | Maximum irrigation |
+
+For each local forecast date, the calculator uses the daily maximum temperature;
+afternoon humidity; central-day wind, gusts, and total cloud cover; the forecast
+month; and daily precipitation. MeteoBlue's hourly `isdaylight` values determine
+sunrise and sunset. The main window runs from two hours after sunrise until two
+hours before sunset, while humidity uses solar noon until two hours before
+sunset. If `isdaylight` is absent, sunrise and sunset are calculated for that
+date and location with Astral. No fixed civil-hour fallback is used.
+
+Temperature, humidity, wind/gust, clouds, and month contribute a base score from
+0 to 16. The score maps to an initial level from 0 to 5. Weighted precipitation
+then reduces that level by one at 0.5 mm, two at 1.5 mm, three at 3 mm, and to
+zero at 5 mm. It also forces zero when gross precipitation reaches 8 mm and the
+maximum probability is at least 40%. Wind and gusts are normalized to km/h from
+the explicit API units, never inferred from their magnitude.
+
+The entity attributes explain the complete calculation. For example:
+
+```yaml
+forecast_date: "2026-07-20"
+forecast_day_offset: 1
+sunrise: "2026-07-20T06:00:00+01:00"
+sunset: "2026-07-20T21:00:00+01:00"
+solar_source: meteoblue_isdaylight
+core_window_used: solar_core
+humidity_window_used: solar_afternoon
+temperature_max: 34.2
+humidity_mean: 42.5
+wind_mean_kmh: 12.4
+gust_max_kmh: 31.8
+cloud_cover_mean: 18.0
+gross_precipitation: 1.0
+weighted_precipitation: 0.6
+base_score: 15
+initial_level: 5
+rain_level_reduction: 1
+final_level: 4
+```
+
+If an essential input, a usable solar period, or an explicit supported wind unit
+is missing, the relevant entity is unavailable and exposes an
+`unavailable_reason` attribute instead of inventing weather values.
 
 ## 💳 MeteoBlue API credits
 

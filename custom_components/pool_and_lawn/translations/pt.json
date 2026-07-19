@@ -1,0 +1,12 @@
+{
+    "entity": {
+        "sensor": {
+            "irrigation_level_today": {
+                "name": "Nível de rega — Hoje"
+            },
+            "irrigation_level_future": {
+                "name": "Nível de rega — Daqui a {day_offset} dias"
+            }
+        }
+    }
+}

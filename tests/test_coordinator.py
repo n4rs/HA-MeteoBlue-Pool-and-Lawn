@@ -89,7 +89,7 @@ def test_reshape_splits_hourly_and_daily_sections() -> None:
     assert hourly_midnight["totalcloudcover"] == 18
     assert hourly_midnight["gust"] == 8.1
     assert "pictocode" not in hourly_midnight
-    assert "isdaylight" not in hourly_midnight
+    assert hourly_midnight["isdaylight"] is False
     assert hourly_midnight["condition"] == PICTOCODE_HOURLY_TO_CONDITION[31]
 
     next_hour = result["forecast_data_hourly"][next_hour_key]
@@ -154,7 +154,7 @@ def test_reshape_with_only_hourly_data() -> None:
 
     assert set(result["forecast_data_hourly"]) == {hour_zero, hour_one}
     assert result["forecast_data_hourly"][hour_one]["temperature"] == 4.5
-    assert "isdaylight" not in result["forecast_data_hourly"][hour_zero]
+    assert result["forecast_data_hourly"][hour_zero]["isdaylight"] is False
     assert (
         result["forecast_data_hourly"][hour_zero]["condition"]
         == PICTOCODE_HOURLY_TO_CONDITION[31]
