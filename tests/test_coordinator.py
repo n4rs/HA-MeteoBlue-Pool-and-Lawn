@@ -25,14 +25,11 @@ from __future__ import annotations
 
 import math
 from datetime import datetime
-from io import BytesIO
-from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
 from dateutil.tz import tzoffset
-from PIL import Image
 from pool_and_lawn.api import ApiPackage
 from pool_and_lawn.const import (
     CONF_ENABLE_HOURLY_CLOUDS_AND_WIND,
@@ -44,13 +41,8 @@ from pool_and_lawn.const import (
 )
 from pool_and_lawn.coordinator import (
     ForecastCoordinator,
-    MeteogramCoordinator,
-    MeteogramImageSet,
     _reshape_forecast_payload,
 )
-
-PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
-METEOGRAM_FIXTURE = Path(__file__).parent / "fixtures" / "meteogram_extended.png"
 
 CEST = tzoffset("CEST", 2 * 3600)
 METADATA_CEST: dict[str, Any] = {
@@ -395,51 +387,3 @@ async def test_forecast_coordinator_selects_expected_packages(
     await coordinator._async_update_data()  # noqa: SLF001
 
     assert client.calls[0]["api_packages"] == expected_packages
-
-
-class _StubMeteogramClient:
-    """Minimal stand-in for MeteoBlueApiClient used by the coordinator test."""
-
-    def __init__(self, image_bytes: bytes) -> None:
-        self._image_bytes = image_bytes
-        self.calls = 0
-
-    async def async_get_meteogram_extended(
-        self,
-        **_kwargs: Any,
-    ) -> bytes:
-        self.calls += 1
-        return self._image_bytes
-
-
-async def test_meteogram_coordinator_returns_light_and_dark_variants() -> None:
-    """Coordinator returns transparent light and inverted-transparent dark PNGs."""
-    raw_bytes = METEOGRAM_FIXTURE.read_bytes()
-    client = _StubMeteogramClient(raw_bytes)
-
-    coordinator = MeteogramCoordinator.__new__(MeteogramCoordinator)
-    coordinator._client = client  # type: ignore[attr-defined]  # noqa: SLF001
-    coordinator.subentry = MagicMock()
-    coordinator.subentry.title = "Test"
-    coordinator.subentry.data = {}
-    coordinator.hass = MagicMock()
-    coordinator.hass.config.latitude = 50.0
-    coordinator.hass.config.longitude = 14.0
-
-    result = await coordinator._async_update_data()  # noqa: SLF001
-
-    assert isinstance(result, MeteogramImageSet)
-    assert result.meteogram_light.content_type == "image/png"
-    assert result.meteogram_dark.content_type == "image/png"
-    assert result.meteogram_light.content != raw_bytes
-    assert result.meteogram_dark.content != result.meteogram_light.content
-    assert result.meteogram_light.content.startswith(PNG_SIGNATURE)
-    assert result.meteogram_dark.content.startswith(PNG_SIGNATURE)
-    for variant in (result.meteogram_light, result.meteogram_dark):
-        with Image.open(BytesIO(variant.content)) as img:
-            img.load()
-            assert img.mode == "RGBA"
-            alpha_min, alpha_max = img.getchannel("A").getextrema()
-            assert alpha_min < 10
-            assert alpha_max == 255
-    assert client.calls == 1

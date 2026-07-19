@@ -52,11 +52,9 @@ from .api import (
 from .const import (
     CONF_ENABLE_FORECAST,
     CONF_ENABLE_HOURLY_CLOUDS_AND_WIND,
-    CONF_ENABLE_METEOGRAM,
     CONF_FORECAST_TYPE,
     CONF_FORECAST_UPDATE_INTERVAL,
     CONF_LOCATION_MODE,
-    CONF_METEOGRAM_UPDATE_INTERVAL,
     DOMAIN,
     FORECAST_TYPE_DAILY,
     FORECAST_TYPE_HOURLY,
@@ -76,11 +74,6 @@ if TYPE_CHECKING:
 MIN_UPDATE_INTERVAL = timedelta(hours=6)
 DEFAULT_FORECAST_UPDATE_INTERVAL: dict[str, int] = {
     "hours": 12,
-    "minutes": 0,
-    "seconds": 0,
-}
-DEFAULT_METEOGRAM_UPDATE_INTERVAL: dict[str, int] = {
-    "hours": 24,
     "minutes": 0,
     "seconds": 0,
 }
@@ -322,7 +315,7 @@ class ForecastLocationSubentryFlowHandler(ConfigSubentryFlow):
                     and user_input[CONF_FORECAST_TYPE] == FORECAST_TYPE_HOURLY
                 ):
                     return await self.async_step_hourly_packages()
-                return await self.async_step_meteogram()
+                return await self._async_finalize()
 
         return self.async_show_form(
             step_id="forecast",
@@ -369,7 +362,7 @@ class ForecastLocationSubentryFlowHandler(ConfigSubentryFlow):
             self._data[CONF_ENABLE_HOURLY_CLOUDS_AND_WIND] = user_input[
                 CONF_ENABLE_HOURLY_CLOUDS_AND_WIND
             ]
-            return await self.async_step_meteogram()
+            return await self._async_finalize()
 
         return self.async_show_form(
             step_id="hourly_packages",
@@ -383,58 +376,13 @@ class ForecastLocationSubentryFlowHandler(ConfigSubentryFlow):
                     ): selector.BooleanSelector(),
                 },
             ),
-            last_step=False,
-        )
-
-    async def async_step_meteogram(
-        self,
-        user_input: dict | None = None,
-    ) -> SubentryFlowResult:
-        """Collect the meteogram configuration."""
-        errors: dict[str, str] = {}
-        if user_input is not None:
-            if (
-                user_input[CONF_ENABLE_METEOGRAM]
-                and _duration_to_timedelta(user_input[CONF_METEOGRAM_UPDATE_INTERVAL])
-                < MIN_UPDATE_INTERVAL
-            ):
-                errors[CONF_METEOGRAM_UPDATE_INTERVAL] = "update_interval_too_short"
-
-            self._data[CONF_ENABLE_METEOGRAM] = user_input[CONF_ENABLE_METEOGRAM]
-            self._data[CONF_METEOGRAM_UPDATE_INTERVAL] = user_input[
-                CONF_METEOGRAM_UPDATE_INTERVAL
-            ]
-
-            if not errors:
-                return await self._async_finalize()
-
-        return self.async_show_form(
-            step_id="meteogram",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        CONF_ENABLE_METEOGRAM,
-                        default=self._data.get(CONF_ENABLE_METEOGRAM, True),
-                    ): selector.BooleanSelector(),
-                    vol.Required(
-                        CONF_METEOGRAM_UPDATE_INTERVAL,
-                        default=self._data.get(
-                            CONF_METEOGRAM_UPDATE_INTERVAL,
-                            DEFAULT_METEOGRAM_UPDATE_INTERVAL,
-                        ),
-                    ): selector.DurationSelector(
-                        selector.DurationSelectorConfig(
-                            enable_day=False,
-                            allow_negative=False,
-                        ),
-                    ),
-                },
-            ),
-            errors=errors,
+            last_step=True,
         )
 
     async def _async_finalize(self) -> SubentryFlowResult:
         """Create or update the location subentry."""
+        self._data.pop("enable_meteogram", None)
+        self._data.pop("meteogram_update_interval", None)
         name = self._data[CONF_NAME]
         unique_id = self._build_unique_id()
         if self.source == config_entries.SOURCE_RECONFIGURE:

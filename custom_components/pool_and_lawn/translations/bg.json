@@ -48,25 +48,11 @@
                     "data": {
                         "enable_forecast": "Активиране на прогнозата за времето",
                         "forecast_type": "Тип на прогнозата",
-                        "forecast_update_interval": "Интервал на обновяване на прогнозата",
-                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
+                        "forecast_update_interval": "Интервал на обновяване на прогнозата"
                     },
                     "data_description": {
-                        "enable_forecast": "Активира метеорологичния обект, който показва текущите условия и прогнозата. Деактивирайте го, ако искате само изображението на метеограмата.",
                         "forecast_type": "Дневна (4000 кредита/заявка) или почасова (8000 кредита/заявка). Когато е избрана почасова, дневната прогноза се синтезира от почасовите данни — не е необходима допълнителна заявка.",
-                        "forecast_update_interval": "Колко често да се извлича прогнозата. По-кратките интервали изразходват кредити по-бързо. Минимум 6 часа.",
-                        "enable_hourly_clouds_and_wind": "Only used with hourly forecasts. Adds the MeteoBlue clouds-1h and wind-1h packages to the basic-1h request so cloud coverage and wind gusts can be exposed."
-                    }
-                },
-                "meteogram": {
-                    "description": "Конфигурирайте изображението на метеограмата. Всяка заявка струва 16000 MeteoBlue кредита.",
-                    "data": {
-                        "enable_meteogram": "Активиране на метеограма",
-                        "meteogram_update_interval": "Интервал на обновяване на метеограмата"
-                    },
-                    "data_description": {
-                        "enable_meteogram": "Активира извличането на 7-дневна метеограма.",
-                        "meteogram_update_interval": "Колко често да се извлича метеограмата. Всяка заявка струва 16000 кредита. Минимум 6 часа."
+                        "forecast_update_interval": "Колко често да се извлича прогнозата. По-кратките интервали изразходват кредити по-бързо. Минимум 6 часа."
                     }
                 },
                 "reconfigure": {

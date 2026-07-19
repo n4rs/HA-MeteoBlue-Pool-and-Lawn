@@ -2,9 +2,8 @@
 
 **HomeAssistant Pool and Lawn** is a Home Assistant custom integration for
 building weather-based operating-time indicators for pool and lawn equipment. It
-uses the [MeteoBlue](https://www.meteoblue.com/) Forecast, Image, and Account
-APIs to expose weather forecasts, meteograms, and API credit usage in Home
-Assistant.
+uses the [MeteoBlue](https://www.meteoblue.com/) Forecast and Account
+APIs to expose weather forecasts and API credit usage in Home Assistant.
 
 This project started as a fork of
 [HomeAssistant-MeteoBlue](https://github.com/dankeder/HomeAssistant-MeteoBlue)
@@ -38,17 +37,12 @@ be implemented with Home Assistant helpers, templates, automations, or scripts.
   - pool circulation pumps, including saltwater and standard pool setups;
   - salt chlorinators;
   - lawn irrigation duration.
-- 🖼️ **Meteogram images** — the 7-day extended meteogram, available in both light
-  and dark variants. The dark variant is generated locally by inverting the
-  light image while preserving hue and saturation, so it stays readable in
-  dark dashboards.
 - 📊 **Credits sensor** showing total API credits consumed, so you can monitor
   your usage against your MeteoBlue plan.
 - 🗺️ **Multiple locations per API key.** Each location is added as a subentry and
   uses either the Home Assistant configured location or custom coordinates
   (with optional elevation).
-- 🎚️ **Independent toggles and update intervals** for the forecast and the
-  meteogram, per location.
+- 🎚️ **Configurable forecast update intervals** per location.
 
 ## 📋 Requirements
 
@@ -100,8 +94,6 @@ Each location is a subentry on the API-key entry. Open the entry and choose
 | **Forecast type** | `daily` or `hourly`. Daily forecasts use MeteoBlue's `basic-day` package. Hourly forecasts always use `basic-1h`, and the integration also exposes a daily forecast that it derives locally from the hourly data. |
 | **Additional hourly clouds and wind data** | Only shown after choosing an enabled hourly forecast. When enabled, the hourly Forecast API call adds `clouds-1h` and `wind-1h`, producing `basic-1h_clouds-1h_wind-1h`. |
 | **Forecast update interval** | Minimum 6 hours, default 6 hours. |
-| **Enable meteogram** | Whether to create the meteogram image entities. |
-| **Meteogram update interval** | Minimum 6 hours, default 6 hours. |
 
 The 6-hour minimum reflects MeteoBlue's update cadence: forecast models run
 [twice per day](https://content.meteoblue.com/en/research-education/specifications/processes/updating),
@@ -114,8 +106,6 @@ For a location named *Home*, the integration creates:
 | Entity ID | Description |
 | -- | -- |
 | `weather.pool_and_lawn_home_weather` | Current conditions and forecast. Only created when **Enable forecast** is on. |
-| `image.pool_and_lawn_home_meteogram` | 7-day extended meteogram (light). Only created when **Enable meteogram** is on. |
-| `image.pool_and_lawn_home_meteogram_dark` | Same meteogram, tone-inverted for dark themes. |
 | `sensor.pool_and_lawn_home_credits_used` | Total API credits consumed by your account, increasing over time. |
 
 ## 💳 MeteoBlue API credits
@@ -129,7 +119,6 @@ API package | Credits per request
 `basic-1h` | 8000 credits/request
 `clouds-1h` | Optional add-on for hourly forecast requests
 `wind-1h` | Optional add-on for hourly forecast requests
-`meteogram_extended` | 16000 credits/request
 
 Hourly forecasts always request `basic-1h`. If **Additional hourly clouds and
 wind data** is enabled, the integration requests `basic-1h_clouds-1h_wind-1h`
@@ -171,7 +160,6 @@ Set `POOL_AND_LAWN_USE_FAKE_CLIENT=1` before [scripts/run](scripts/run) to load
 
 - MeteoBlue [Forecast API documentation](https://docs.meteoblue.com/en/weather-apis/forecast-api/overview)
   and [OpenAPI spec](https://my.meteoblue.com/packages/redoc#tag/Overview-Structure).
-- MeteoBlue [Image API documentation](https://docs.meteoblue.com/en/weather-apis/images-api/overview).
 - MeteoBlue [Account API documentation](https://docs.meteoblue.com/en/weather-apis/further-apis/account-api).
 - [Issue tracker](https://github.com/n4rs/HA-MeteoBlue-Pool-and-Lawn/issues).
 

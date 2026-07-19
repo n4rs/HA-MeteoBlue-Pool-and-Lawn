@@ -43,13 +43,13 @@ FORECAST_INTERVAL = {"hours": 12, "minutes": 0, "seconds": 0}
 def forecast_flow(
     monkeypatch: pytest.MonkeyPatch,
 ) -> ForecastLocationSubentryFlowHandler:
-    """Return a forecast subentry flow with terminal steps stubbed."""
+    """Return a forecast subentry flow with finalization stubbed."""
     flow = ForecastLocationSubentryFlowHandler()
 
-    async def _meteogram() -> dict[str, Any]:
-        return {"type": "form", "step_id": "meteogram"}
+    async def _finalize() -> dict[str, Any]:
+        return {"type": "create_entry", "step_id": "finalize"}
 
-    monkeypatch.setattr(flow, "async_step_meteogram", _meteogram)
+    monkeypatch.setattr(flow, "_async_finalize", _finalize)
     return flow
 
 
@@ -89,7 +89,7 @@ async def test_forecast_step_skips_hourly_packages_for_daily(
         }
     )
 
-    assert result["step_id"] == "meteogram"
+    assert result["step_id"] == "finalize"
     assert CONF_ENABLE_HOURLY_CLOUDS_AND_WIND not in forecast_flow._data  # noqa: SLF001
 
 
@@ -107,7 +107,7 @@ async def test_forecast_step_skips_hourly_packages_when_forecast_disabled(
         }
     )
 
-    assert result["step_id"] == "meteogram"
+    assert result["step_id"] == "finalize"
     assert CONF_ENABLE_HOURLY_CLOUDS_AND_WIND not in forecast_flow._data  # noqa: SLF001
 
 
@@ -119,5 +119,5 @@ async def test_hourly_packages_step_stores_selection(
         {CONF_ENABLE_HOURLY_CLOUDS_AND_WIND: False}
     )
 
-    assert result["step_id"] == "meteogram"
+    assert result["step_id"] == "finalize"
     assert forecast_flow._data[CONF_ENABLE_HOURLY_CLOUDS_AND_WIND] is False  # noqa: SLF001

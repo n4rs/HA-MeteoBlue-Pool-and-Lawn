@@ -48,25 +48,11 @@
                     "data": {
                         "enable_forecast": "Activar pronóstico del tiempo",
                         "forecast_type": "Tipo de pronóstico",
-                        "forecast_update_interval": "Intervalo de actualización del pronóstico",
-                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
+                        "forecast_update_interval": "Intervalo de actualización del pronóstico"
                     },
                     "data_description": {
-                        "enable_forecast": "Activa la entidad meteorológica que muestra las condiciones actuales y el pronóstico. Desactívala si solo quieres la imagen del meteograma.",
                         "forecast_type": "Diaria (4000 créditos/solicitud) o por horas (8000 créditos/solicitud). Cuando se selecciona por horas, el pronóstico diario se sintetiza a partir de los datos horarios — no se necesita una solicitud adicional.",
-                        "forecast_update_interval": "Con qué frecuencia se obtiene el pronóstico. Los intervalos más cortos consumen créditos más rápido. Mínimo 6 horas.",
-                        "enable_hourly_clouds_and_wind": "Only used with hourly forecasts. Adds the MeteoBlue clouds-1h and wind-1h packages to the basic-1h request so cloud coverage and wind gusts can be exposed."
-                    }
-                },
-                "meteogram": {
-                    "description": "Configura la imagen del meteograma. Cada solicitud cuesta 16000 créditos de MeteoBlue.",
-                    "data": {
-                        "enable_meteogram": "Activar meteograma",
-                        "meteogram_update_interval": "Intervalo de actualización del meteograma"
-                    },
-                    "data_description": {
-                        "enable_meteogram": "Activa la obtención de un meteograma de 7 días.",
-                        "meteogram_update_interval": "Con qué frecuencia se obtiene el meteograma. Cada solicitud cuesta 16000 créditos. Mínimo 6 horas."
+                        "forecast_update_interval": "Con qué frecuencia se obtiene el pronóstico. Los intervalos más cortos consumen créditos más rápido. Mínimo 6 horas."
                     }
                 },
                 "reconfigure": {

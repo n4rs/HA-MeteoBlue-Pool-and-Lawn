@@ -48,25 +48,11 @@
                     "data": {
                         "enable_forecast": "Activează prognoza meteo",
                         "forecast_type": "Tip de prognoză",
-                        "forecast_update_interval": "Interval de actualizare a prognozei",
-                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
+                        "forecast_update_interval": "Interval de actualizare a prognozei"
                     },
                     "data_description": {
-                        "enable_forecast": "Activează entitatea meteo care expune condițiile actuale și prognoza. Dezactiveaz-o dacă vrei doar imaginea meteogramei.",
                         "forecast_type": "Zilnic (4000 credite/cerere) sau orar (8000 credite/cerere). Când este selectat orar, prognoza zilnică este sintetizată din datele orare — nu este nevoie de o cerere suplimentară.",
-                        "forecast_update_interval": "Cât de des se obține prognoza. Intervalele mai scurte consumă credite mai repede. Minim 6 ore.",
-                        "enable_hourly_clouds_and_wind": "Only used with hourly forecasts. Adds the MeteoBlue clouds-1h and wind-1h packages to the basic-1h request so cloud coverage and wind gusts can be exposed."
-                    }
-                },
-                "meteogram": {
-                    "description": "Configurează imaginea meteogramei. Fiecare cerere costă 16000 de credite MeteoBlue.",
-                    "data": {
-                        "enable_meteogram": "Activează meteograma",
-                        "meteogram_update_interval": "Interval de actualizare a meteogramei"
-                    },
-                    "data_description": {
-                        "enable_meteogram": "Activează obținerea unei meteograme de 7 zile.",
-                        "meteogram_update_interval": "Cât de des se obține meteograma. Fiecare cerere costă 16000 de credite. Minim 6 ore."
+                        "forecast_update_interval": "Cât de des se obține prognoza. Intervalele mai scurte consumă credite mai repede. Minim 6 ore."
                     }
                 },
                 "reconfigure": {

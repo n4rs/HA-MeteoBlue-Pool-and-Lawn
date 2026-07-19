@@ -48,25 +48,11 @@
                     "data": {
                         "enable_forecast": "Virkja veðurspá",
                         "forecast_type": "Tegund spár",
-                        "forecast_update_interval": "Uppfærslutíðni spár",
-                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
+                        "forecast_update_interval": "Uppfærslutíðni spár"
                     },
                     "data_description": {
-                        "enable_forecast": "Virkjar veðureininguna sem sýnir núverandi aðstæður og spána. Slökktu á henni ef þú vilt aðeins meteogram-myndina.",
                         "forecast_type": "Daglega (4000 credits/beiðni) eða klukkustundarlega (8000 credits/beiðni). Þegar klukkustundarlega er valið er dagleg spá búin til úr klukkustundagögnum — engin auka beiðni þarf.",
-                        "forecast_update_interval": "Hve oft á að sækja spána. Styttri tímabil nota credits hraðar. Að lágmarki 6 klukkustundir.",
-                        "enable_hourly_clouds_and_wind": "Only used with hourly forecasts. Adds the MeteoBlue clouds-1h and wind-1h packages to the basic-1h request so cloud coverage and wind gusts can be exposed."
-                    }
-                },
-                "meteogram": {
-                    "description": "Stilltu meteogram-myndina. Hver beiðni kostar 16000 MeteoBlue-credits.",
-                    "data": {
-                        "enable_meteogram": "Virkja meteogram",
-                        "meteogram_update_interval": "Uppfærslutíðni meteograms"
-                    },
-                    "data_description": {
-                        "enable_meteogram": "Virkjar sókn á 7 daga meteogram.",
-                        "meteogram_update_interval": "Hve oft á að sækja meteogramið. Hver beiðni kostar 16000 credits. Að lágmarki 6 klukkustundir."
+                        "forecast_update_interval": "Hve oft á að sækja spána. Styttri tímabil nota credits hraðar. Að lágmarki 6 klukkustundir."
                     }
                 },
                 "reconfigure": {

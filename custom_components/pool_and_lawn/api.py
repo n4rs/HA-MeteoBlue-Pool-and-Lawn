@@ -28,7 +28,7 @@ import json
 from datetime import UTC, date, datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 import httpx
 
@@ -108,31 +108,6 @@ class MeteoBlueApiClient:
             params=params,
         )
 
-    async def async_get_meteogram_extended(
-        self,
-        latitude: float,
-        longitude: float,
-        location_name: str,
-    ) -> bytes:
-        """Get the extended meteogram image from the MeteoBlue Image API."""
-        params: dict[str, Any] = {
-            "apikey": self._api_key,
-            "lat": latitude,
-            "lon": longitude,
-            "location_name": location_name,
-        }
-        content, content_type = await self._api_wrapper(
-            method="get",
-            url=f"{API_BASE_URL}/images/meteogram_extended",
-            params=params,
-            response_type="bytes",
-        )
-        mime_type = content_type.split(";", 1)[0].strip().lower()
-        if not mime_type.startswith("image/"):
-            msg = f"Unexpected content-type from meteogram endpoint: {content_type!r}"
-            raise MeteoBlueApiClientCommunicationError(msg)
-        return content
-
     async def async_get_account_usage(self) -> Any:
         """Fetch account usage info, paging through all available records."""
         items: list[Any] = []
@@ -154,14 +129,13 @@ class MeteoBlueApiClient:
                 return {"items": items, "metadata": metadata}
             page += 1
 
-    async def _api_wrapper(  # noqa: PLR0913
+    async def _api_wrapper(
         self,
         method: str,
         url: str,
         data: dict | None = None,
         headers: dict | None = None,
         params: dict | None = None,
-        response_type: Literal["json", "bytes"] = "json",
     ) -> Any:
         """Get information from the API."""
         try:
@@ -174,11 +148,6 @@ class MeteoBlueApiClient:
                 timeout=10,
             )
             response.raise_for_status()
-            if response_type == "bytes":
-                return (
-                    response.content,
-                    response.headers.get("content-type", ""),
-                )
             return response.json()
 
         except httpx.TimeoutException as exception:
@@ -256,21 +225,6 @@ class FakeMeteoBlueApiClient(MeteoBlueApiClient):
         )
         payload = json.loads(await asyncio.to_thread(fixture_path.read_text))
         return _shift_forecast_dates(payload)
-
-    async def async_get_meteogram_extended(
-        self,
-        latitude: float,  # noqa: ARG002
-        longitude: float,  # noqa: ARG002
-        location_name: str,  # noqa: ARG002
-    ) -> bytes:
-        """Return the fixture PNG without hitting the API."""
-        fixture_path = (
-            Path(__file__).parent.parent.parent
-            / "tests"
-            / "fixtures"
-            / "meteogram_extended.png"
-        )
-        return await asyncio.to_thread(fixture_path.read_bytes)
 
     async def async_get_account_usage(self) -> Any:
         """Return the fixture response without hitting the API."""

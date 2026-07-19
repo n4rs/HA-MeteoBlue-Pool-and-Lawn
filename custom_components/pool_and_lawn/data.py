@@ -30,11 +30,7 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
 
     from .api import MeteoBlueApiClient
-    from .coordinator import (
-        AccountUsageCoordinator,
-        ForecastCoordinator,
-        MeteogramCoordinator,
-    )
+    from .coordinator import AccountUsageCoordinator, ForecastCoordinator
 
 
 type MeteoBlueConfigEntry = ConfigEntry[MeteoBlueData]
@@ -47,6 +43,3 @@ class MeteoBlueData:
     client: MeteoBlueApiClient
     account_coordinator: AccountUsageCoordinator
     location_coordinators: dict[str, ForecastCoordinator] = field(default_factory=dict)
-    meteogram_coordinators: dict[str, MeteogramCoordinator] = field(
-        default_factory=dict
-    )

@@ -48,25 +48,11 @@
                     "data": {
                         "enable_forecast": "Wettervorhersage aktivieren",
                         "forecast_type": "Vorhersagetyp",
-                        "forecast_update_interval": "Aktualisierungsintervall der Vorhersage",
-                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
+                        "forecast_update_interval": "Aktualisierungsintervall der Vorhersage"
                     },
                     "data_description": {
-                        "enable_forecast": "Aktiviert die Wetterentität, die aktuelle Bedingungen und die Vorhersage bereitstellt. Deaktivieren Sie sie, wenn Sie nur das Meteogramm-Bild möchten.",
                         "forecast_type": "Täglich (4000 Credits/Anfrage) oder stündlich (8000 Credits/Anfrage). Bei stündlich wird die Tagesvorhersage aus den stündlichen Daten erzeugt — eine zusätzliche Anfrage ist nicht erforderlich.",
-                        "forecast_update_interval": "Wie oft die Vorhersage abgerufen wird. Kürzere Intervalle verbrauchen Credits schneller. Mindestens 6 Stunden.",
-                        "enable_hourly_clouds_and_wind": "Only used with hourly forecasts. Adds the MeteoBlue clouds-1h and wind-1h packages to the basic-1h request so cloud coverage and wind gusts can be exposed."
-                    }
-                },
-                "meteogram": {
-                    "description": "Konfigurieren Sie das Meteogramm-Bild. Jede Anfrage kostet 16000 MeteoBlue-Credits.",
-                    "data": {
-                        "enable_meteogram": "Meteogramm aktivieren",
-                        "meteogram_update_interval": "Aktualisierungsintervall des Meteogramms"
-                    },
-                    "data_description": {
-                        "enable_meteogram": "Aktiviert das Abrufen eines 7-Tage-Meteogramms.",
-                        "meteogram_update_interval": "Wie oft das Meteogramm abgerufen wird. Jede Anfrage kostet 16000 Credits. Mindestens 6 Stunden."
+                        "forecast_update_interval": "Wie oft die Vorhersage abgerufen wird. Kürzere Intervalle verbrauchen Credits schneller. Mindestens 6 Stunden."
                     }
                 },
                 "reconfigure": {
