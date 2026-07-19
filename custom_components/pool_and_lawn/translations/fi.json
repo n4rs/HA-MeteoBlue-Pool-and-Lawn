@@ -48,25 +48,11 @@
                     "data": {
                         "enable_forecast": "Ota sääennuste käyttöön",
                         "forecast_type": "Ennustetyyppi",
-                        "forecast_update_interval": "Ennusteen päivitysväli",
-                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
+                        "forecast_update_interval": "Ennusteen päivitysväli"
                     },
                     "data_description": {
-                        "enable_forecast": "Ottaa käyttöön sääentiteetin, joka näyttää nykyiset olosuhteet ja ennusteen. Poista käytöstä, jos haluat vain meteogrammikuvan.",
                         "forecast_type": "Päivittäinen (4000 credits/pyyntö) tai tunneittain (8000 credits/pyyntö). Kun tunneittain on valittuna, päiväennuste muodostetaan tuntidatasta — ylimääräistä pyyntöä ei tarvita.",
-                        "forecast_update_interval": "Kuinka usein ennuste haetaan. Lyhyemmät välit kuluttavat credits-pisteitä nopeammin. Vähintään 6 tuntia.",
-                        "enable_hourly_clouds_and_wind": "Only used with hourly forecasts. Adds the MeteoBlue clouds-1h and wind-1h packages to the basic-1h request so cloud coverage and wind gusts can be exposed."
-                    }
-                },
-                "meteogram": {
-                    "description": "Määritä meteogrammikuva. Jokainen pyyntö kuluttaa 16000 MeteoBlue-credits.",
-                    "data": {
-                        "enable_meteogram": "Ota meteogrammi käyttöön",
-                        "meteogram_update_interval": "Meteogrammin päivitysväli"
-                    },
-                    "data_description": {
-                        "enable_meteogram": "Ottaa käyttöön 7 päivän meteogrammin haun.",
-                        "meteogram_update_interval": "Kuinka usein meteogrammi haetaan. Jokainen pyyntö kuluttaa 16000 credits. Vähintään 6 tuntia."
+                        "forecast_update_interval": "Kuinka usein ennuste haetaan. Lyhyemmät välit kuluttavat credits-pisteitä nopeammin. Vähintään 6 tuntia."
                     }
                 },
                 "reconfigure": {

@@ -30,11 +30,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import slugify
 
 from .const import ATTRIBUTION, DOMAIN
-from .coordinator import (
-    AccountUsageCoordinator,
-    ForecastCoordinator,
-    MeteogramCoordinator,
-)
+from .coordinator import AccountUsageCoordinator, ForecastCoordinator
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigSubentry
@@ -92,31 +88,6 @@ class MeteoBlueLocationEntity(CoordinatorEntity[ForecastCoordinator]):
         platform_domain: str,
     ) -> None:
         """Initialize a location-level entity."""
-        super().__init__(coordinator)
-        self.entity_description = entity_description
-        subentry: ConfigSubentry = coordinator.subentry
-        self._attr_unique_id = f"{subentry.subentry_id}-{entity_description.key}"
-        self.entity_id = _build_entity_id(platform_domain, subentry, entity_description)
-        self._attr_device_info = DeviceInfo(
-            identifiers={(f"{DOMAIN}_location", subentry.subentry_id)},
-            name=subentry.title,
-            manufacturer="MeteoBlue",
-        )
-
-
-class MeteoBlueMeteogramEntity(CoordinatorEntity[MeteogramCoordinator]):
-    """Base class for meteogram entities tied to a MeteoBlue location subentry."""
-
-    _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
-
-    def __init__(
-        self,
-        coordinator: MeteogramCoordinator,
-        entity_description: EntityDescription,
-        platform_domain: str,
-    ) -> None:
-        """Initialize a meteogram entity."""
         super().__init__(coordinator)
         self.entity_description = entity_description
         subentry: ConfigSubentry = coordinator.subentry

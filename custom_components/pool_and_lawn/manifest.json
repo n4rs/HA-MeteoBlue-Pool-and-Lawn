@@ -9,9 +9,7 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/n4rs/HA-MeteoBlue-Pool-and-Lawn/issues",
   "requirements": [
-    "python-dateutil",
-    "Pillow",
-    "numpy"
+    "python-dateutil"
   ],
   "version": "0.2.0"
 }

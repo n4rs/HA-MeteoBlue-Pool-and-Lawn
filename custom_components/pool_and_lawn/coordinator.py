@@ -23,10 +23,9 @@
 
 from __future__ import annotations
 
-import asyncio
 import math
 from datetime import date, datetime, timedelta
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any
 
 from dateutil.parser import parse as dateutil_parse
 from dateutil.tz import tzoffset
@@ -46,7 +45,6 @@ from .const import (
     CONF_FORECAST_TYPE,
     CONF_FORECAST_UPDATE_INTERVAL,
     CONF_LOCATION_MODE,
-    CONF_METEOGRAM_UPDATE_INTERVAL,
     DOMAIN,
     FORECAST_TYPE_HOURLY,
     LOCATION_MODE_CUSTOM,
@@ -54,7 +52,6 @@ from .const import (
     PICTOCODE_DAILY_TO_CONDITION,
     PICTOCODE_HOURLY_TO_CONDITION,
 )
-from .image_utils import invert_png, remove_background
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -67,21 +64,6 @@ if TYPE_CHECKING:
 
 ACCOUNT_USAGE_UPDATE_INTERVAL = timedelta(hours=6)
 FORECAST_UPDATE_INTERVAL = timedelta(hours=6)
-METEOGRAM_UPDATE_INTERVAL = timedelta(hours=6)
-
-
-class MeteogramImage(NamedTuple):
-    """Meteogram image payload exposed by ``MeteogramCoordinator``."""
-
-    content: bytes
-    content_type: str
-
-
-class MeteogramImageSet(NamedTuple):
-    """Pair of meteogram variants exposed by ``MeteogramCoordinator``."""
-
-    meteogram_light: MeteogramImage
-    meteogram_dark: MeteogramImage
 
 
 def _interval_from_subentry(
@@ -342,61 +324,3 @@ class ForecastCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         except MeteoBlueApiClientError as exception:
             raise UpdateFailed(exception) from exception
         return _reshape_forecast_payload(raw)
-
-
-class MeteogramCoordinator(DataUpdateCoordinator[MeteogramImageSet]):
-    """Fetches the MeteoBlue extended meteogram image for a single location subentry."""
-
-    config_entry: MeteoBlueConfigEntry
-
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        config_entry: MeteoBlueConfigEntry,
-        subentry: ConfigSubentry,
-        client: MeteoBlueApiClient,
-    ) -> None:
-        """Initialize the meteogram coordinator for a location subentry."""
-        super().__init__(
-            hass=hass,
-            logger=LOGGER,
-            name=f"{DOMAIN}_meteogram_{subentry.subentry_id}",
-            update_interval=_interval_from_subentry(
-                subentry.data,
-                CONF_METEOGRAM_UPDATE_INTERVAL,
-                METEOGRAM_UPDATE_INTERVAL,
-            ),
-            config_entry=config_entry,
-        )
-        self.subentry = subentry
-        self._client = client
-
-    async def _async_update_data(self) -> MeteogramImageSet:
-        """Fetch the extended meteogram image for this location."""
-        data = self.subentry.data
-        if data.get(CONF_LOCATION_MODE) == LOCATION_MODE_CUSTOM:
-            latitude = data[CONF_LATITUDE]
-            longitude = data[CONF_LONGITUDE]
-        else:
-            latitude = self.hass.config.latitude
-            longitude = self.hass.config.longitude
-        try:
-            raw_bytes = await self._client.async_get_meteogram_extended(
-                latitude=latitude,
-                longitude=longitude,
-                location_name=self.subentry.title,
-            )
-            light_bytes = await asyncio.to_thread(remove_background, raw_bytes)
-            dark_bytes = await asyncio.to_thread(invert_png, light_bytes)
-        except MeteoBlueApiClientAuthenticationError as exception:
-            raise ConfigEntryAuthFailed(exception) from exception
-        except MeteoBlueApiTimeoutError as exception:
-            raise UpdateFailed(exception) from exception
-        except MeteoBlueApiClientError as exception:
-            raise UpdateFailed(exception) from exception
-        return MeteogramImageSet(
-            meteogram_light=MeteogramImage(
-                content=light_bytes, content_type="image/png"
-            ),
-            meteogram_dark=MeteogramImage(content=dark_bytes, content_type="image/png"),
-        )

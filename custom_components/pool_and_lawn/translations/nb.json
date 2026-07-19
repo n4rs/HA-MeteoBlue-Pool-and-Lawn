@@ -48,25 +48,11 @@
                     "data": {
                         "enable_forecast": "Aktiver værvarsel",
                         "forecast_type": "Varseltype",
-                        "forecast_update_interval": "Oppdateringsintervall for værvarsel",
-                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
+                        "forecast_update_interval": "Oppdateringsintervall for værvarsel"
                     },
                     "data_description": {
-                        "enable_forecast": "Aktiver værentiteten som viser nåværende forhold og varsel. Deaktiver hvis du bare vil ha meteogram-bildet.",
                         "forecast_type": "Daglig (4000 credits/forespørsel) eller time for time (8000 credits/forespørsel). Når time for time er valgt, syntetiseres dagsvarselet fra timesdataene — ingen ekstra forespørsel er nødvendig.",
-                        "forecast_update_interval": "Hvor ofte værvarselet skal hentes. Kortere intervaller bruker credits raskere. Minimum 6 timer.",
-                        "enable_hourly_clouds_and_wind": "Only used with hourly forecasts. Adds the MeteoBlue clouds-1h and wind-1h packages to the basic-1h request so cloud coverage and wind gusts can be exposed."
-                    }
-                },
-                "meteogram": {
-                    "description": "Konfigurer meteogram-bildet. Hver forespørsel koster 16000 MeteoBlue-credits.",
-                    "data": {
-                        "enable_meteogram": "Aktiver meteogram",
-                        "meteogram_update_interval": "Oppdateringsintervall for meteogram"
-                    },
-                    "data_description": {
-                        "enable_meteogram": "Aktiver henting av et 7-dagers meteogram.",
-                        "meteogram_update_interval": "Hvor ofte meteogrammet skal hentes. Hver forespørsel koster 16000 credits. Minimum 6 timer."
+                        "forecast_update_interval": "Hvor ofte værvarselet skal hentes. Kortere intervaller bruker credits raskere. Minimum 6 timer."
                     }
                 },
                 "reconfigure": {

@@ -34,19 +34,12 @@ import os
 from typing import TYPE_CHECKING
 
 from homeassistant.const import CONF_API_KEY, Platform
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import httpx_client
 
 from .api import FakeMeteoBlueApiClient, MeteoBlueApiClient
-from .const import (
-    CONF_ENABLE_FORECAST,
-    CONF_ENABLE_METEOGRAM,
-    SUBENTRY_TYPE_FORECAST_LOCATION,
-)
-from .coordinator import (
-    AccountUsageCoordinator,
-    ForecastCoordinator,
-    MeteogramCoordinator,
-)
+from .const import CONF_ENABLE_FORECAST, DOMAIN, SUBENTRY_TYPE_FORECAST_LOCATION
+from .coordinator import AccountUsageCoordinator, ForecastCoordinator
 from .data import MeteoBlueData
 
 if TYPE_CHECKING:
@@ -55,7 +48,6 @@ if TYPE_CHECKING:
     from .data import MeteoBlueConfigEntry
 
 PLATFORMS: list[Platform] = [
-    Platform.IMAGE,
     Platform.SENSOR,
     Platform.WEATHER,
 ]
@@ -69,6 +61,23 @@ def _use_fake_client() -> bool:
         "true",
         "yes",
     }
+
+
+def _remove_legacy_meteogram_entities(
+    hass: HomeAssistant,
+    entry: MeteoBlueConfigEntry,
+) -> None:
+    """Remove image entities left behind by versions with meteogram support."""
+    entity_registry = er.async_get(hass)
+    for subentry in entry.subentries.values():
+        for key in ("meteogram", "meteogram_dark"):
+            entity_id = entity_registry.async_get_entity_id(
+                Platform.IMAGE,
+                DOMAIN,
+                f"{subentry.subentry_id}-{key}",
+            )
+            if entity_id is not None:
+                entity_registry.async_remove(entity_id)
 
 
 async def async_setup_entry(
@@ -102,22 +111,10 @@ async def async_setup_entry(
         if subentry.subentry_type == SUBENTRY_TYPE_FORECAST_LOCATION
         and subentry.data.get(CONF_ENABLE_FORECAST, True)
     }
-    meteogram_coordinators: dict[str, MeteogramCoordinator] = {
-        subentry.subentry_id: MeteogramCoordinator(
-            hass=hass,
-            config_entry=entry,
-            subentry=subentry,
-            client=client,
-        )
-        for subentry in entry.subentries.values()
-        if subentry.subentry_type == SUBENTRY_TYPE_FORECAST_LOCATION
-        and subentry.data.get(CONF_ENABLE_METEOGRAM, True)
-    }
     entry.runtime_data = MeteoBlueData(
         client=client,
         account_coordinator=account_coordinator,
         location_coordinators=location_coordinators,
-        meteogram_coordinators=meteogram_coordinators,
     )
 
     await asyncio.gather(
@@ -126,12 +123,9 @@ async def async_setup_entry(
             coordinator.async_config_entry_first_refresh()
             for coordinator in location_coordinators.values()
         ),
-        *(
-            coordinator.async_config_entry_first_refresh()
-            for coordinator in meteogram_coordinators.values()
-        ),
     )
 
+    _remove_legacy_meteogram_entities(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
