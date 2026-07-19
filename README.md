@@ -33,14 +33,11 @@ be implemented with Home Assistant helpers, templates, automations, or scripts.
   (selectable per location). Hourly forecasts include temperature, humidity,
   wind speed, wind gusts, precipitation, precipitation probability, and cloud
   coverage when returned by MeteoBlue.
-<<<<<<< ours
-=======
 - 🌱 **Pool and lawn focused hourly data** suitable for deriving runtime
   indicators in Home Assistant automations/templates for:
   - pool circulation pumps, including saltwater and standard pool setups;
   - salt chlorinators;
   - lawn irrigation duration.
->>>>>>> theirs
 - 🖼️ **Meteogram images** — the 7-day extended meteogram, available in both light
   and dark variants. The dark variant is generated locally by inverting the
   light image while preserving hue and saturation, so it stays readable in
@@ -101,11 +98,7 @@ Each location is a subentry on the API-key entry. Open the entry and choose
 | **Elevation** *(custom mode, optional)* | Meters above sea level. |
 | **Enable forecast** | Whether to create the weather entity. |
 | **Forecast type** | `daily` or `hourly`. Daily forecasts use MeteoBlue's `basic-day` package. Hourly forecasts always use `basic-1h`, and the integration also exposes a daily forecast that it derives locally from the hourly data. |
-<<<<<<< ours
-| **Additional hourly clouds and wind data** | Only shown for hourly forecasts. When enabled, the hourly Forecast API call adds `clouds-1h` and `wind-1h`, producing `basic-1h_clouds-1h_wind-1h`. |
-=======
 | **Additional hourly clouds and wind data** | Only shown after choosing an enabled hourly forecast. When enabled, the hourly Forecast API call adds `clouds-1h` and `wind-1h`, producing `basic-1h_clouds-1h_wind-1h`. |
->>>>>>> theirs
 | **Forecast update interval** | Minimum 6 hours, default 6 hours. |
 | **Enable meteogram** | Whether to create the meteogram image entities. |
 | **Meteogram update interval** | Minimum 6 hours, default 6 hours. |
@@ -159,28 +152,6 @@ cloud_coverage: 18
 precipitation: 0
 precipitation_probability: 5
 ```
-<<<<<<< ours
-
-### ⏱️ Sizing your update intervals
-
-A free-tier budget of 10M credits/year works out to roughly **27,000 credits
-per day**. A few worked examples for one location:
-
-- **Daily forecast every 12 h + meteogram every 24 h** — `2 × 4000 + 1 × 16000`
-  = 24,000/day. Comfortably within the free tier.
-- **Hourly forecast every 24 h + meteogram every 24 h** - `1 × 8000 + 1 × 16000`
-  = 24,000/day. Fits into the free tier.
-- **Daily forecast every 6 h + meteogram every 24 h** — `4 × 4000 + 1 × 16000`
-  = 32,000/day. Slightly over budget of the free tier — bump the forecast to every 8 h.
-- **Daily forecast every 8 h + meteogram every 24 h** — `3 × 4000 + 1 × 16000`
-  = 32,000/day. Fits into the free tier.
-- **Hourly forecast every 6 h + meteogram every 12 h** — `4 × 8000 + 2 × 16000`
-  = 64,000/day. Requires a paid plan.
-
-The credits sensor lets you confirm actual consumption against these
-estimates.
-=======
->>>>>>> theirs
 
 ## 🛠️ Development
 

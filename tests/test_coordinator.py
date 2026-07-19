@@ -32,14 +32,9 @@ from unittest.mock import MagicMock
 
 import pytest
 from dateutil.tz import tzoffset
-<<<<<<< ours
-from meteoblue.api import ApiPackage
-from meteoblue.const import (
-=======
 from PIL import Image
 from pool_and_lawn.api import ApiPackage
 from pool_and_lawn.const import (
->>>>>>> theirs
     CONF_ENABLE_HOURLY_CLOUDS_AND_WIND,
     CONF_FORECAST_TYPE,
     FORECAST_TYPE_DAILY,
@@ -47,11 +42,7 @@ from pool_and_lawn.const import (
     PICTOCODE_DAILY_TO_CONDITION,
     PICTOCODE_HOURLY_TO_CONDITION,
 )
-<<<<<<< ours
-from meteoblue.coordinator import (
-=======
 from pool_and_lawn.coordinator import (
->>>>>>> theirs
     ForecastCoordinator,
     MeteogramCoordinator,
     MeteogramImageSet,
