@@ -1,0 +1,113 @@
+{
+    "config": {
+        "initiate_flow": {
+            "user": "Pridať API kľúč"
+        },
+        "step": {
+            "user": {
+                "description": "Ak potrebujete pomoc s konfiguráciou, pozrite sa sem: {documentation_url}",
+                "data": {
+                    "name": "Názov",
+                    "api_key": "API kľúč"
+                }
+            }
+        },
+        "error": {
+            "auth": "Neplatný API kľúč.",
+            "connection": "Nepodarilo sa pripojiť na server.",
+            "unknown": "Vyskytla sa neznáma chyba."
+        },
+        "abort": {
+            "already_configured": "Tento API kľúč je už nakonfigurovaný."
+        }
+    },
+    "config_subentries": {
+        "forecast_location": {
+            "initiate_flow": {
+                "user": "Pridať lokalitu predpovede",
+                "reconfigure": "Zmeniť konfiguráciu lokality predpovede"
+            },
+            "entry_type": "Lokalita predpovede",
+            "step": {
+                "user": {
+                    "description": "Pomenujte lokalitu a vyberte, či sa má použiť poloha z Home Assistantu, alebo vlastná.",
+                    "data": {
+                        "name": "Názov",
+                        "location_mode": "Zdroj polohy"
+                    }
+                },
+                "location": {
+                    "description": "Vyberte lokalitu, pre ktorú sa má načítavať predpoveď.",
+                    "data": {
+                        "location": "Lokalita",
+                        "elevation": "Nadmorská výška (m, voliteľné)"
+                    }
+                },
+                "forecast": {
+                    "description": "Nastavte predpoveď počasia. Každá požiadavka stojí kredity MeteoBlue: denná 4000, hodinová 8000.",
+                    "data": {
+                        "enable_forecast": "Povoliť predpoveď počasia",
+                        "forecast_type": "Typ predpovede",
+                        "forecast_update_interval": "Interval aktualizácie predpovede",
+                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
+                    },
+                    "data_description": {
+                        "enable_forecast": "Povolí entitu počasia, ktorá sprístupňuje aktuálne podmienky a predpoveď. Ak chcete len obrázok meteogramu, ponechajte vypnuté.",
+                        "forecast_type": "Denná (4000 kreditov/požiadavka) alebo hodinová (8000 kreditov/požiadavka). Pri voľbe hodinovej sa denná predpoveď vytvára z hodinových údajov — ďalšia požiadavka nie je potrebná.",
+                        "forecast_update_interval": "Ako často načítavať predpoveď. Kratšie intervaly spotrebúvajú kredity rýchlejšie. Minimum je 6 hodín.",
+                        "enable_hourly_clouds_and_wind": "Only used with hourly forecasts. Adds the MeteoBlue clouds-1h and wind-1h packages to the basic-1h request so cloud coverage and wind gusts can be exposed."
+                    }
+                },
+                "meteogram": {
+                    "description": "Nastavte obrázok meteogramu. Každá požiadavka stojí 16000 kreditov MeteoBlue.",
+                    "data": {
+                        "enable_meteogram": "Povoliť meteogram",
+                        "meteogram_update_interval": "Interval aktualizácie meteogramu"
+                    },
+                    "data_description": {
+                        "enable_meteogram": "Povolí načítavanie 7-dňového meteogramu.",
+                        "meteogram_update_interval": "Ako často načítavať meteogram. Každá požiadavka stojí 16000 kreditov. Minimum je 6 hodín."
+                    }
+                },
+                "reconfigure": {
+                    "description": "Pomenujte lokalitu a vyberte, či sa má použiť poloha z Home Assistantu, alebo vlastná.",
+                    "data": {
+                        "name": "Názov",
+                        "location_mode": "Zdroj polohy"
+                    }
+                },
+                "hourly_packages": {
+                    "description": "Configure optional hourly forecast packages.",
+                    "data": {
+                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
+                    },
+                    "data_description": {
+                        "enable_hourly_clouds_and_wind": "Add the MeteoBlue clouds-1h and wind-1h packages to the basic-1h hourly request so cloud coverage and wind gusts can be exposed."
+                    }
+                }
+            },
+            "error": {
+                "location_required": "Vyberte prosím lokalitu, alebo prepnite na \"Použiť polohu Home Assistantu\".",
+                "update_interval_too_short": "Interval aktualizácie musí byť aspoň 6 hodín."
+            },
+            "abort": {
+                "already_configured": "Táto lokalita je už nakonfigurovaná.",
+                "reconfigure_successful": "Zmena konfigurácie prebehla úspešne."
+            }
+        }
+    },
+    "selector": {
+        "location_mode": {
+            "options": {
+                "auto": "Použiť polohu Home Assistantu",
+                "custom": "Vybrať lokalitu"
+            }
+        },
+        "forecast_type": {
+            "options": {
+                "daily": "Denná",
+                "hourly": "Hodinová"
+            }
+        }
+    }
+}

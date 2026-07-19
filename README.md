@@ -1,15 +1,23 @@
-# 🌦️ MeteoBlue for Home Assistant
+# 🌿 HomeAssistant Pool and Lawn
 
-A Home Assistant integration for the [MeteoBlue](https://www.meteoblue.com/)
-weather service. It exposes current conditions and forecasts as a weather
-entity, renders 7-day extended meteograms as image entities (light and dark
-variants), and tracks API credit usage as a sensor — all configured per
-location through the UI.
+**HomeAssistant Pool and Lawn** is a Home Assistant custom integration for pool
+and lawn weather planning. It uses the [MeteoBlue](https://www.meteoblue.com/)
+Forecast, Image, and Account APIs to expose weather forecasts, meteograms, and
+API credit usage in Home Assistant.
+
+This project started as a fork of
+[HomeAssistant-MeteoBlue](https://github.com/dankeder/HomeAssistant-MeteoBlue)
+by Dan Keder. Attribution to the original project and other upstream components
+is preserved in [NOTICE](NOTICE).
 
 ## ✨ Features
 
 - 🌤️ **Weather entity** with current conditions and a daily or hourly forecast
-  (selectable per location).
+  (selectable per location). Hourly forecasts include temperature, humidity,
+  wind speed, wind gusts, precipitation, precipitation probability, and cloud
+  coverage when returned by MeteoBlue.
+- 🌱 **Pool and lawn focused hourly data** suitable for deriving irrigation or
+  outdoor-maintenance indices in Home Assistant automations/templates.
 - 🖼️ **Meteogram images** — the 7-day extended meteogram, available in both light
   and dark variants. The dark variant is generated locally by inverting the
   light image while preserving hue and saturation, so it stays readable in
@@ -24,8 +32,8 @@ location through the UI.
 
 ## 📋 Requirements
 
-- Home Assistant **2026.3.2** or newer.
-- Python **3.14.2** or newer (matches the supported Home Assistant runtime).
+- Home Assistant **2025.3.0** or newer.
+- Python version compatible with your Home Assistant runtime.
 - A MeteoBlue API key from [my.meteoblue.com](https://my.meteoblue.com).
 
 ## 📦 Installation
@@ -33,23 +41,25 @@ location through the UI.
 ### 🏪 HACS (recommended)
 
 1. In HACS, open **Integrations** → menu → **Custom repositories**.
-2. Add `https://github.com/dankeder/HomeAssistant-MeteoBlue` as an
+2. Add `https://github.com/n4rs/HA-MeteoBlue-Pool-and-Lawn` as an
    **Integration** repository.
-3. Install **MeteoBlue** from the HACS list and restart Home Assistant.
+3. Install **HomeAssistant Pool and Lawn** from the HACS list and restart Home
+   Assistant.
 
 ### 🔧 Manual
 
-1. Copy [custom_components/meteoblue/](custom_components/meteoblue/) into your
-   Home Assistant `config/custom_components/` directory.
+1. Copy [custom_components/pool_and_lawn/](custom_components/pool_and_lawn/) into
+   your Home Assistant `config/custom_components/` directory.
 2. Restart Home Assistant.
 
 ## ⚙️ Configuration
 
 ### 🔑 1. Add the API key
 
-**Settings → Devices & Services → Add Integration → MeteoBlue**, then enter:
+**Settings → Devices & Services → Add Integration → HomeAssistant Pool and Lawn**,
+then enter:
 
-- **Name** — a label for this API key (e.g. *MeteoBlue*).
+- **Name** — a label for this API key (e.g. *Pool and Lawn*).
 - **API key** — your key from [my.meteoblue.com](https://my.meteoblue.com).
 
 The key is validated against the MeteoBlue Account API before the entry is
@@ -67,7 +77,8 @@ Each location is a subentry on the API-key entry. Open the entry and choose
 | **Latitude / Longitude** *(custom mode)* | Picked via the map selector. |
 | **Elevation** *(custom mode, optional)* | Meters above sea level. |
 | **Enable forecast** | Whether to create the weather entity. |
-| **Forecast type** | `daily` or `hourly`. With `hourly`, the integration also exposes a daily forecast that it derives locally from the hourly data, so only one Forecast API call is made per update. |
+| **Forecast type** | `daily` or `hourly`. Daily forecasts use MeteoBlue's `basic-day` package. Hourly forecasts always use `basic-1h`, and the integration also exposes a daily forecast that it derives locally from the hourly data. |
+| **Additional hourly clouds and wind data** | Only shown after choosing an enabled hourly forecast. When enabled, the hourly Forecast API call adds `clouds-1h` and `wind-1h`, producing `basic-1h_clouds-1h_wind-1h`. |
 | **Forecast update interval** | Minimum 6 hours, default 6 hours. |
 | **Enable meteogram** | Whether to create the meteogram image entities. |
 | **Meteogram update interval** | Minimum 6 hours, default 6 hours. |
@@ -82,10 +93,10 @@ For a location named *Home*, the integration creates:
 
 | Entity ID | Description |
 | -- | -- |
-| `weather.meteoblue_home_weather` | Current conditions and forecast. Only created when **Enable forecast** is on. |
-| `image.meteoblue_home_meteogram` | 7-day extended meteogram (light). Only created when **Enable meteogram** is on. |
-| `image.meteoblue_home_meteogram_dark` | Same meteogram, tone-inverted for dark themes. |
-| `sensor.meteoblue_home_credits_used` | Total API credits consumed by your account, increasing over time. |
+| `weather.pool_and_lawn_home_weather` | Current conditions and forecast. Only created when **Enable forecast** is on. |
+| `image.pool_and_lawn_home_meteogram` | 7-day extended meteogram (light). Only created when **Enable meteogram** is on. |
+| `image.pool_and_lawn_home_meteogram_dark` | Same meteogram, tone-inverted for dark themes. |
+| `sensor.pool_and_lawn_home_credits_used` | Total API credits consumed by your account, increasing over time. |
 
 ## 💳 MeteoBlue API credits
 
@@ -94,28 +105,33 @@ amount of credits. The cost of API calls used by this integration are:
 
 API package | Credits per request
 -- | --
-`basic_day` | 4000 credits/request
-`basic_1h` | 8000 credits/request
+`basic-day` | 4000 credits/request
+`basic-1h` | 8000 credits/request
+`clouds-1h` | Optional add-on for hourly forecast requests
+`wind-1h` | Optional add-on for hourly forecast requests
 `meteogram_extended` | 16000 credits/request
 
-### ⏱️ Sizing your update intervals
+Hourly forecasts always request `basic-1h`. If **Additional hourly clouds and
+wind data** is enabled, the integration requests `basic-1h_clouds-1h_wind-1h`
+in one Forecast API call so Home Assistant can receive hourly temperature,
+humidity, wind speed, wind gusts, precipitation, precipitation probability, and
+cloud coverage. Use the credits sensor and the MeteoBlue account dashboard to
+confirm the exact charge for your plan and API package combination.
 
-A free-tier budget of 10M credits/year works out to roughly **27,000 credits
-per day**. A few worked examples for one location:
+The weather entity exposes these values through Home Assistant's weather
+attributes and forecast service. For example, hourly `weather.get_forecasts`
+responses can include fields equivalent to:
 
-- **Daily forecast every 12 h + meteogram every 24 h** — `2 × 4000 + 1 × 16000`
-  = 24,000/day. Comfortably within the free tier.
-- **Hourly forecast every 24 h + meteogram every 24 h** - `1 × 8000 + 1 × 16000`
-  = 24,000/day. Fits into the free tier.
-- **Daily forecast every 6 h + meteogram every 24 h** — `4 × 4000 + 1 × 16000`
-  = 32,000/day. Slightly over budget of the free tier — bump the forecast to every 8 h.
-- **Daily forecast every 8 h + meteogram every 24 h** — `3 × 4000 + 1 × 16000`
-  = 32,000/day. Fits into the free tier.
-- **Hourly forecast every 6 h + meteogram every 12 h** — `4 × 8000 + 2 × 16000`
-  = 64,000/day. Requires a paid plan.
-
-The credits sensor lets you confirm actual consumption against these
-estimates.
+```yaml
+datetime: "2026-07-19T12:00:00+01:00"
+temperature: 31.2
+humidity: 42
+wind_speed: 4.3
+wind_gust_speed: 8.1
+cloud_coverage: 18
+precipitation: 0
+precipitation_probability: 5
+```
 
 ## 🛠️ Development
 
@@ -127,7 +143,7 @@ The repository ships a small set of helper scripts in [scripts/](scripts/):
 - [scripts/lint](scripts/lint) — run `ruff format` and `ruff check`.
 - [scripts/test](scripts/test) — run the test suite with `pytest`.
 
-Set `METEOBLUE_USE_FAKE_CLIENT=1` before [scripts/run](scripts/run) to load
+Set `POOL_AND_LAWN_USE_FAKE_CLIENT=1` before [scripts/run](scripts/run) to load
 `FakeMeteoBlueApiClient`, which serves canned responses from
 [tests/fixtures/](tests/fixtures/) instead of calling the MeteoBlue API.
 
@@ -137,8 +153,11 @@ Set `METEOBLUE_USE_FAKE_CLIENT=1` before [scripts/run](scripts/run) to load
   and [OpenAPI spec](https://my.meteoblue.com/packages/redoc#tag/Overview-Structure).
 - MeteoBlue [Image API documentation](https://docs.meteoblue.com/en/weather-apis/images-api/overview).
 - MeteoBlue [Account API documentation](https://docs.meteoblue.com/en/weather-apis/further-apis/account-api).
-- [Issue tracker](https://github.com/dankeder/HomeAssistant-MeteoBlue/issues).
+- [Issue tracker](https://github.com/n4rs/HA-MeteoBlue-Pool-and-Lawn/issues).
 
-## 📄 License
+## 📄 License and attribution
 
-Licensed under the [Apache License, Version 2.0](LICENSE).
+This repository uses a composite license. Original upstream code remains under
+its original Apache 2.0/MIT terms. HomeAssistant Pool and Lawn modifications and
+additions are Copyright 2026 n4rs. All rights reserved. See [LICENSE](LICENSE)
+and [NOTICE](NOTICE) for details.

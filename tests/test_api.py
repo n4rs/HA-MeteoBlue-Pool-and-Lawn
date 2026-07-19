@@ -1,5 +1,8 @@
 # Copyright 2026 Dan Keder
 #
+# Modifications Copyright 2026 n4rs. All rights reserved.
+# See LICENSE for the terms that apply to HomeAssistant Pool and Lawn modifications.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -23,17 +26,17 @@ from __future__ import annotations
 from typing import Any
 
 import httpx
-import meteoblue.api
+import pool_and_lawn.api
 import pytest
 
-ApiPackage = meteoblue.api.ApiPackage
-MeteoBlueApiClient = meteoblue.api.MeteoBlueApiClient
-MeteoBlueApiClientError = meteoblue.api.MeteoBlueApiClientError
+ApiPackage = pool_and_lawn.api.ApiPackage
+MeteoBlueApiClient = pool_and_lawn.api.MeteoBlueApiClient
+MeteoBlueApiClientError = pool_and_lawn.api.MeteoBlueApiClientError
 MeteoBlueApiClientCommunicationError = (
-    meteoblue.api.MeteoBlueApiClientCommunicationError
+    pool_and_lawn.api.MeteoBlueApiClientCommunicationError
 )
 MeteoBlueApiClientAuthenticationError = (
-    meteoblue.api.MeteoBlueApiClientAuthenticationError
+    pool_and_lawn.api.MeteoBlueApiClientAuthenticationError
 )
 
 
@@ -65,6 +68,38 @@ async def test_daily_forecast_sends_expected_request(
     assert request.url.params["windSpeedUnit"] == "m/s"
     assert request.url.params["windDirectionUnit"] == "degree"
     assert request.url.params["precipitationUnit"] == "metric"
+
+
+async def test_hourly_forecast_joins_packages_in_stable_order(
+    make_client: Any,
+    raw_hourly_forecast_payload: dict,
+) -> None:
+    """Client joins multiple hourly packages in the requested order."""
+    captured: dict[str, httpx.Request] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["request"] = request
+        return httpx.Response(200, json=raw_hourly_forecast_payload)
+
+    client = make_client(handler)
+    await client.async_get_forecast(
+        latitude=47.558,
+        longitude=7.573,
+        api_packages=[
+            ApiPackage.BASIC_1H,
+            ApiPackage.CLOUDS_1H,
+            ApiPackage.WIND_1H,
+        ],
+    )
+
+    request = captured["request"]
+    assert request.method == "GET"
+    assert str(request.url).startswith(
+        "https://my.meteoblue.com/packages/basic-1h_clouds-1h_wind-1h"
+    )
+    assert request.url.params["apikey"] == "test-key"
+    assert request.url.params["lat"] == "47.558"
+    assert request.url.params["lon"] == "7.573"
 
 
 async def test_daily_forecast_returns_parsed_json(
@@ -250,7 +285,7 @@ async def test_meteogram_auth_errors_raise_authentication_error(
         )
 
 
-PAGE_SIZE = meteoblue.api.ACCOUNT_USAGE_PAGE_SIZE
+PAGE_SIZE = pool_and_lawn.api.ACCOUNT_USAGE_PAGE_SIZE
 
 
 def _make_item(index: int) -> dict[str, Any]:

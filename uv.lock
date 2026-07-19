@@ -1449,7 +1449,7 @@ wheels = [
 ]
 
 [[package]]
-name = "homeassistant-meteoblue"
+name = "homeassistant-pool-and-lawn"
 version = "0.1.4"
 source = { virtual = "." }
 dependencies = [
