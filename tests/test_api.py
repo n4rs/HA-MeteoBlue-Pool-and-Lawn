@@ -67,6 +67,38 @@ async def test_daily_forecast_sends_expected_request(
     assert request.url.params["precipitationUnit"] == "metric"
 
 
+async def test_hourly_forecast_joins_packages_in_stable_order(
+    make_client: Any,
+    raw_hourly_forecast_payload: dict,
+) -> None:
+    """Client joins multiple hourly packages in the requested order."""
+    captured: dict[str, httpx.Request] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["request"] = request
+        return httpx.Response(200, json=raw_hourly_forecast_payload)
+
+    client = make_client(handler)
+    await client.async_get_forecast(
+        latitude=47.558,
+        longitude=7.573,
+        api_packages=[
+            ApiPackage.BASIC_1H,
+            ApiPackage.CLOUDS_1H,
+            ApiPackage.WIND_1H,
+        ],
+    )
+
+    request = captured["request"]
+    assert request.method == "GET"
+    assert str(request.url).startswith(
+        "https://my.meteoblue.com/packages/basic-1h_clouds-1h_wind-1h"
+    )
+    assert request.url.params["apikey"] == "test-key"
+    assert request.url.params["lat"] == "47.558"
+    assert request.url.params["lon"] == "7.573"
+
+
 async def test_daily_forecast_returns_parsed_json(
     make_client: Any,
     raw_daily_forecast_payload: dict,

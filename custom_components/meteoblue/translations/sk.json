@@ -48,12 +48,14 @@
                     "data": {
                         "enable_forecast": "Povoliť predpoveď počasia",
                         "forecast_type": "Typ predpovede",
-                        "forecast_update_interval": "Interval aktualizácie predpovede"
+                        "forecast_update_interval": "Interval aktualizácie predpovede",
+                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
                     },
                     "data_description": {
                         "enable_forecast": "Povolí entitu počasia, ktorá sprístupňuje aktuálne podmienky a predpoveď. Ak chcete len obrázok meteogramu, ponechajte vypnuté.",
                         "forecast_type": "Denná (4000 kreditov/požiadavka) alebo hodinová (8000 kreditov/požiadavka). Pri voľbe hodinovej sa denná predpoveď vytvára z hodinových údajov — ďalšia požiadavka nie je potrebná.",
-                        "forecast_update_interval": "Ako často načítavať predpoveď. Kratšie intervaly spotrebúvajú kredity rýchlejšie. Minimum je 6 hodín."
+                        "forecast_update_interval": "Ako často načítavať predpoveď. Kratšie intervaly spotrebúvajú kredity rýchlejšie. Minimum je 6 hodín.",
+                        "enable_hourly_clouds_and_wind": "Only used with hourly forecasts. Adds the MeteoBlue clouds-1h and wind-1h packages to the basic-1h request so cloud coverage and wind gusts can be exposed."
                     }
                 },
                 "meteogram": {
@@ -72,6 +74,15 @@
                     "data": {
                         "name": "Názov",
                         "location_mode": "Zdroj polohy"
+                    }
+                },
+                "hourly_packages": {
+                    "description": "Configure optional hourly forecast packages.",
+                    "data": {
+                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
+                    },
+                    "data_description": {
+                        "enable_hourly_clouds_and_wind": "Add the MeteoBlue clouds-1h and wind-1h packages to the basic-1h hourly request so cloud coverage and wind gusts can be exposed."
                     }
                 }
             },

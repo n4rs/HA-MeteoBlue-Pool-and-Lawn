@@ -37,6 +37,7 @@ CONF_FORECAST_UPDATE_INTERVAL = "forecast_update_interval"
 CONF_METEOGRAM_UPDATE_INTERVAL = "meteogram_update_interval"
 
 CONF_ENABLE_FORECAST = "enable_forecast"
+CONF_ENABLE_HOURLY_CLOUDS_AND_WIND = "enable_hourly_clouds_and_wind"
 CONF_ENABLE_METEOGRAM = "enable_meteogram"
 
 SUBENTRY_TYPE_FORECAST_LOCATION = "forecast_location"

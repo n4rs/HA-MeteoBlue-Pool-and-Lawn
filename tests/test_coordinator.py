@@ -29,11 +29,17 @@ from unittest.mock import MagicMock
 
 import pytest
 from dateutil.tz import tzoffset
+from meteoblue.api import ApiPackage
 from meteoblue.const import (
+    CONF_ENABLE_HOURLY_CLOUDS_AND_WIND,
+    CONF_FORECAST_TYPE,
+    FORECAST_TYPE_DAILY,
+    FORECAST_TYPE_HOURLY,
     PICTOCODE_DAILY_TO_CONDITION,
     PICTOCODE_HOURLY_TO_CONDITION,
 )
 from meteoblue.coordinator import (
+    ForecastCoordinator,
     MeteogramCoordinator,
     MeteogramImageSet,
     _reshape_forecast_payload,
@@ -58,6 +64,8 @@ def test_reshape_splits_hourly_and_daily_sections() -> None:
             "time": ["2026-04-20 00:00", "2026-04-20 01:00"],
             "temperature": [5.0, 4.5],
             "precipitation": [0.1, 0.0],
+            "totalcloudcover": [18, 42],
+            "gust": [8.1, 9.9],
             "pictocode": [31, 7],
             "isdaylight": [0, 0],
         },
@@ -83,12 +91,16 @@ def test_reshape_splits_hourly_and_daily_sections() -> None:
     hourly_midnight = result["forecast_data_hourly"][midnight_key]
     assert hourly_midnight["temperature"] == 5.0
     assert hourly_midnight["precipitation"] == 0.1
+    assert hourly_midnight["totalcloudcover"] == 18
+    assert hourly_midnight["gust"] == 8.1
     assert "pictocode" not in hourly_midnight
     assert "isdaylight" not in hourly_midnight
     assert hourly_midnight["condition"] == PICTOCODE_HOURLY_TO_CONDITION[31]
 
     next_hour = result["forecast_data_hourly"][next_hour_key]
     assert next_hour["temperature"] == 4.5
+    assert next_hour["totalcloudcover"] == 42
+    assert next_hour["gust"] == 9.9
     assert "temperature_max" not in next_hour
 
     assert set(result["forecast_data_daily"]) == {midnight_key}
@@ -158,6 +170,27 @@ def test_reshape_with_only_hourly_data() -> None:
     )
 
 
+def test_reshape_tolerates_missing_optional_cloud_and_gust_fields() -> None:
+    """Optional cloud and gust fields may be absent from the hourly response."""
+    raw: dict[str, Any] = {
+        "metadata": METADATA_CEST,
+        "units": {},
+        "data_1h": {
+            "time": ["2026-04-20 00:00"],
+            "temperature": [5.0],
+            "pictocode": [31],
+        },
+    }
+
+    result = _reshape_forecast_payload(raw)
+
+    hour_zero = datetime(2026, 4, 20, 0, 0, tzinfo=CEST)
+    entry = result["forecast_data_hourly"][hour_zero]
+    assert entry["temperature"] == 5.0
+    assert "totalcloudcover" not in entry
+    assert "gust" not in entry
+
+
 def test_reshape_hourly_sunny_at_night_becomes_clear_night() -> None:
     """A "sunny" pictocode resolves to "clear-night" when the hour is non-daylight."""
     raw: dict[str, Any] = {
@@ -217,6 +250,10 @@ def test_reshape_synthesizes_daily_from_hourly_when_data_day_absent() -> None:
     day_one_temps: list[float] = [5.0 + i * 0.25 for i in range(24)]
     day_one_precs: list[float] = [0.1] * 24
     day_one_probs: list[float] = [float(i * 4) for i in range(24)]
+    day_one_clouds: list[float | None] = [float((i * 3) % 100) for i in range(24)]
+    day_one_clouds[5] = None
+    day_one_gusts: list[float | None] = [6.0 + i * 0.1 for i in range(24)]
+    day_one_gusts[6] = None
     # Winds clustered around 90° (east) so the circular mean is well-defined
     # and not a near-zero floating-point cancellation.
     day_one_winds: list[float] = [3.0 + (i % 3) for i in range(24)]
@@ -230,6 +267,8 @@ def test_reshape_synthesizes_daily_from_hourly_when_data_day_absent() -> None:
     temperatures: list[float] = [*day_one_temps, -1.0]
     precipitations: list[float] = [*day_one_precs, 0.0]
     probabilities: list[float] = [*day_one_probs, 0.0]
+    cloud_covers: list[float | None] = [*day_one_clouds, None]
+    gusts: list[float | None] = [*day_one_gusts, None]
     windspeeds: list[float] = [*day_one_winds, 0.0]
     winddirections: list[float] = [*day_one_dirs, 0.0]
     pictocodes: list[int] = [*day_one_pictocodes, 4]
@@ -242,6 +281,8 @@ def test_reshape_synthesizes_daily_from_hourly_when_data_day_absent() -> None:
             "temperature": temperatures,
             "precipitation": precipitations,
             "precipitation_probability": probabilities,
+            "totalcloudcover": cloud_covers,
+            "gust": gusts,
             "windspeed": windspeeds,
             "winddirection": winddirections,
             "pictocode": pictocodes,
@@ -261,6 +302,12 @@ def test_reshape_synthesizes_daily_from_hourly_when_data_day_absent() -> None:
     assert aggregated["temperature_min"] == min(day_one_temps)
     assert aggregated["precipitation"] == pytest.approx(sum(day_one_precs))
     assert aggregated["precipitation_probability"] == max(day_one_probs)
+    valid_clouds = [v for v in day_one_clouds if v is not None]
+    valid_gusts = [v for v in day_one_gusts if v is not None]
+    assert aggregated["totalcloudcover_mean"] == pytest.approx(
+        sum(valid_clouds) / len(valid_clouds)
+    )
+    assert aggregated["gust_max"] == max(valid_gusts)
     assert aggregated["windspeed_mean"] == pytest.approx(
         sum(day_one_winds) / len(day_one_winds)
     )
@@ -276,6 +323,75 @@ def test_reshape_synthesizes_daily_from_hourly_when_data_day_absent() -> None:
     assert aggregated["winddirection"] == pytest.approx(expected_bearing)
     # Condition comes from the midday pictocode via the hourly mapping table.
     assert aggregated["condition"] == PICTOCODE_HOURLY_TO_CONDITION[25]
+
+
+class _StubForecastClient:
+    """Minimal stand-in that records forecast package requests."""
+
+    def __init__(self) -> None:
+        self.calls: list[dict[str, Any]] = []
+
+    async def async_get_forecast(self, **kwargs: Any) -> dict[str, Any]:
+        self.calls.append(kwargs)
+        return {
+            "metadata": METADATA_CEST,
+            "units": {},
+            "data_day": {
+                "time": ["2026-04-20"],
+                "pictocode": [3],
+            },
+        }
+
+
+@pytest.mark.parametrize(
+    ("subentry_data", "expected_packages"),
+    [
+        (
+            {
+                CONF_FORECAST_TYPE: FORECAST_TYPE_HOURLY,
+                CONF_ENABLE_HOURLY_CLOUDS_AND_WIND: True,
+            },
+            [ApiPackage.BASIC_1H, ApiPackage.CLOUDS_1H, ApiPackage.WIND_1H],
+        ),
+        (
+            {
+                CONF_FORECAST_TYPE: FORECAST_TYPE_HOURLY,
+                CONF_ENABLE_HOURLY_CLOUDS_AND_WIND: False,
+            },
+            [ApiPackage.BASIC_1H],
+        ),
+        (
+            {CONF_FORECAST_TYPE: FORECAST_TYPE_HOURLY},
+            [
+                ApiPackage.BASIC_1H,
+                ApiPackage.CLOUDS_1H,
+                ApiPackage.WIND_1H,
+            ],
+        ),
+        (FORECAST_TYPE_DAILY, [ApiPackage.BASIC_DAY]),
+    ],
+)
+async def test_forecast_coordinator_selects_expected_packages(
+    subentry_data: dict[str, Any] | str,
+    expected_packages: list[ApiPackage],
+) -> None:
+    """ForecastCoordinator requests the correct MeteoBlue packages per mode."""
+    client = _StubForecastClient()
+    coordinator = ForecastCoordinator.__new__(ForecastCoordinator)
+    coordinator._client = client  # type: ignore[attr-defined]  # noqa: SLF001
+    coordinator.subentry = MagicMock()
+    coordinator.subentry.data = (
+        {CONF_FORECAST_TYPE: subentry_data}
+        if isinstance(subentry_data, str)
+        else subentry_data
+    )
+    coordinator.hass = MagicMock()
+    coordinator.hass.config.latitude = 50.0
+    coordinator.hass.config.longitude = 14.0
+
+    await coordinator._async_update_data()  # noqa: SLF001
+
+    assert client.calls[0]["api_packages"] == expected_packages
 
 
 class _StubMeteogramClient:

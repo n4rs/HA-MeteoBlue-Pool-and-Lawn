@@ -48,6 +48,7 @@ from .api import (
 )
 from .const import (
     CONF_ENABLE_FORECAST,
+    CONF_ENABLE_HOURLY_CLOUDS_AND_WIND,
     CONF_ENABLE_METEOGRAM,
     CONF_FORECAST_TYPE,
     CONF_FORECAST_UPDATE_INTERVAL,
@@ -306,8 +307,18 @@ class ForecastLocationSubentryFlowHandler(ConfigSubentryFlow):
             self._data[CONF_FORECAST_UPDATE_INTERVAL] = user_input[
                 CONF_FORECAST_UPDATE_INTERVAL
             ]
+            if (
+                not user_input[CONF_ENABLE_FORECAST]
+                or user_input[CONF_FORECAST_TYPE] != FORECAST_TYPE_HOURLY
+            ):
+                self._data.pop(CONF_ENABLE_HOURLY_CLOUDS_AND_WIND, None)
 
             if not errors:
+                if (
+                    user_input[CONF_ENABLE_FORECAST]
+                    and user_input[CONF_FORECAST_TYPE] == FORECAST_TYPE_HOURLY
+                ):
+                    return await self.async_step_hourly_packages()
                 return await self.async_step_meteogram()
 
         return self.async_show_form(
@@ -343,6 +354,32 @@ class ForecastLocationSubentryFlowHandler(ConfigSubentryFlow):
                 },
             ),
             errors=errors,
+            last_step=False,
+        )
+
+    async def async_step_hourly_packages(
+        self,
+        user_input: dict | None = None,
+    ) -> SubentryFlowResult:
+        """Collect optional hourly forecast package configuration."""
+        if user_input is not None:
+            self._data[CONF_ENABLE_HOURLY_CLOUDS_AND_WIND] = user_input[
+                CONF_ENABLE_HOURLY_CLOUDS_AND_WIND
+            ]
+            return await self.async_step_meteogram()
+
+        return self.async_show_form(
+            step_id="hourly_packages",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_ENABLE_HOURLY_CLOUDS_AND_WIND,
+                        default=self._data.get(
+                            CONF_ENABLE_HOURLY_CLOUDS_AND_WIND, True
+                        ),
+                    ): selector.BooleanSelector(),
+                },
+            ),
             last_step=False,
         )
 

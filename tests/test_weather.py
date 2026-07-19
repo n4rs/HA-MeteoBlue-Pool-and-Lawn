@@ -43,6 +43,7 @@ INSTANT_PROPERTIES = (
     "native_wind_gust_speed",
     "wind_bearing",
     "uv_index",
+    "cloud_coverage",
 )
 
 CEST = tzoffset("CEST", 2 * 3600)
@@ -151,7 +152,7 @@ def test_native_wind_gust_speed_returns_current_daily_value(
 ) -> None:
     freeze_now(CURRENT_DAILY_NOW)
     weather = make_weather(daily_forecast_payload)
-    expected = _current_daily_entry(daily_forecast_payload)["windspeed_max"]
+    expected = _current_daily_entry(daily_forecast_payload).get("gust_max")
     assert weather.native_wind_gust_speed == expected
 
 
@@ -203,6 +204,17 @@ def test_daily_uses_last_entry_when_now_exceeds_forecast(
     assert weather.native_temperature == expected
 
 
+def test_cloud_coverage_returns_current_daily_value(
+    make_weather: Callable[..., MeteoBlueWeather],
+    daily_forecast_payload: dict[str, Any],
+    freeze_now: Callable[[datetime], None],
+) -> None:
+    freeze_now(CURRENT_DAILY_NOW)
+    weather = make_weather(daily_forecast_payload)
+    expected = _current_daily_entry(daily_forecast_payload).get("totalcloudcover_mean")
+    assert weather.cloud_coverage == expected
+
+
 def test_always_none_properties(
     make_weather: Callable[..., MeteoBlueWeather],
     daily_forecast_payload: dict[str, Any],
@@ -210,7 +222,6 @@ def test_always_none_properties(
 ) -> None:
     freeze_now(CURRENT_DAILY_NOW)
     weather = make_weather(daily_forecast_payload)
-    assert weather.cloud_coverage is None
     assert weather.native_visibility is None
     assert weather.native_dew_point is None
 
@@ -301,14 +312,15 @@ def test_native_wind_speed_returns_current_hourly_value(
     assert weather.native_wind_speed == expected
 
 
-def test_native_wind_gust_speed_is_none_for_hourly(
+def test_native_wind_gust_speed_returns_current_hourly_value(
     make_weather: Callable[..., MeteoBlueWeather],
     hourly_forecast_payload: dict[str, Any],
     freeze_now: Callable[[datetime], None],
 ) -> None:
     freeze_now(CURRENT_HOURLY_NOW)
     weather = make_weather(hourly_forecast_payload, FORECAST_TYPE_HOURLY)
-    assert weather.native_wind_gust_speed is None
+    expected = _current_hourly_entry(hourly_forecast_payload)["gust"]
+    assert weather.native_wind_gust_speed == expected
 
 
 def test_wind_bearing_returns_current_hourly_value(
@@ -320,6 +332,17 @@ def test_wind_bearing_returns_current_hourly_value(
     weather = make_weather(hourly_forecast_payload, FORECAST_TYPE_HOURLY)
     expected = _current_hourly_entry(hourly_forecast_payload)["winddirection"]
     assert weather.wind_bearing == expected
+
+
+def test_cloud_coverage_returns_current_hourly_value(
+    make_weather: Callable[..., MeteoBlueWeather],
+    hourly_forecast_payload: dict[str, Any],
+    freeze_now: Callable[[datetime], None],
+) -> None:
+    freeze_now(CURRENT_HOURLY_NOW)
+    weather = make_weather(hourly_forecast_payload, FORECAST_TYPE_HOURLY)
+    expected = _current_hourly_entry(hourly_forecast_payload)["totalcloudcover"]
+    assert weather.cloud_coverage == expected
 
 
 def test_uv_index_returns_current_hourly_value(
@@ -384,7 +407,9 @@ async def test_async_forecast_daily_builds_entries(
         first["precipitation_probability"] == first_entry["precipitation_probability"]
     )
     assert first["native_wind_speed"] == first_entry["windspeed_mean"]
+    assert first["native_wind_gust_speed"] == first_entry.get("gust_max")
     assert first["wind_bearing"] == first_entry["winddirection"]
+    assert first["cloud_coverage"] == first_entry.get("totalcloudcover_mean")
 
 
 async def test_async_forecast_daily_returns_none_when_no_data(
@@ -420,7 +445,9 @@ async def test_async_forecast_daily_aggregates_from_hourly(
         first["precipitation_probability"] == first_entry["precipitation_probability"]
     )
     assert first["native_wind_speed"] == first_entry["windspeed_mean"]
+    assert first["native_wind_gust_speed"] == first_entry["gust_max"]
     assert first["wind_bearing"] == first_entry["winddirection"]
+    assert first["cloud_coverage"] == first_entry["totalcloudcover_mean"]
     assert first["condition"] == first_entry["condition"]
 
 
@@ -508,8 +535,10 @@ async def test_async_forecast_hourly_builds_entries(
     )
     assert first["native_pressure"] == first_entry["sealevelpressure"]
     assert first["native_wind_speed"] == first_entry["windspeed"]
+    assert first["native_wind_gust_speed"] == first_entry["gust"]
     assert first["wind_bearing"] == first_entry["winddirection"]
     assert first["humidity"] == first_entry["relativehumidity"]
+    assert first["cloud_coverage"] == first_entry["totalcloudcover"]
 
 
 async def test_async_forecast_hourly_returns_none_when_no_data(

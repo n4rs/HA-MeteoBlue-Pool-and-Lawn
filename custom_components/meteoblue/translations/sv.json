@@ -48,12 +48,14 @@
                     "data": {
                         "enable_forecast": "Aktivera väderprognos",
                         "forecast_type": "Prognostyp",
-                        "forecast_update_interval": "Uppdateringsintervall för prognos"
+                        "forecast_update_interval": "Uppdateringsintervall för prognos",
+                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
                     },
                     "data_description": {
                         "enable_forecast": "Aktivera väderentiteten som visar aktuella förhållanden och prognosen. Inaktivera om du bara vill ha meteogrambilden.",
                         "forecast_type": "Daglig (4000 credits/förfrågan) eller timvis (8000 credits/förfrågan). När timvis är valt skapas dagsprognosen från timdata — ingen extra förfrågan behövs.",
-                        "forecast_update_interval": "Hur ofta prognosen ska hämtas. Kortare intervall förbrukar credits snabbare. Minst 6 timmar."
+                        "forecast_update_interval": "Hur ofta prognosen ska hämtas. Kortare intervall förbrukar credits snabbare. Minst 6 timmar.",
+                        "enable_hourly_clouds_and_wind": "Only used with hourly forecasts. Adds the MeteoBlue clouds-1h and wind-1h packages to the basic-1h request so cloud coverage and wind gusts can be exposed."
                     }
                 },
                 "meteogram": {
@@ -72,6 +74,15 @@
                     "data": {
                         "name": "Namn",
                         "location_mode": "Platskälla"
+                    }
+                },
+                "hourly_packages": {
+                    "description": "Configure optional hourly forecast packages.",
+                    "data": {
+                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
+                    },
+                    "data_description": {
+                        "enable_hourly_clouds_and_wind": "Add the MeteoBlue clouds-1h and wind-1h packages to the basic-1h hourly request so cloud coverage and wind gusts can be exposed."
                     }
                 }
             },
