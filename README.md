@@ -1,14 +1,31 @@
 # 🌿 HomeAssistant Pool and Lawn
 
-**HomeAssistant Pool and Lawn** is a Home Assistant custom integration for pool
-and lawn weather planning. It uses the [MeteoBlue](https://www.meteoblue.com/)
-Forecast, Image, and Account APIs to expose weather forecasts, meteograms, and
-API credit usage in Home Assistant.
+**HomeAssistant Pool and Lawn** is a Home Assistant custom integration for
+building weather-based operating-time indicators for pool and lawn equipment. It
+uses the [MeteoBlue](https://www.meteoblue.com/) Forecast, Image, and Account
+APIs to expose weather forecasts, meteograms, and API credit usage in Home
+Assistant.
 
 This project started as a fork of
 [HomeAssistant-MeteoBlue](https://github.com/dankeder/HomeAssistant-MeteoBlue)
 by Dan Keder. Attribution to the original project and other upstream components
 is preserved in [NOTICE](NOTICE).
+
+## 🎯 Project goal
+
+The goal of this integration is to make MeteoBlue weather data available in Home
+Assistant in a form that can be used to calculate practical runtime indicators
+for outdoor equipment, including:
+
+- pool pump operating time for saltwater pools;
+- pool pump operating time for standard/chlorine pools;
+- salt chlorinator operating time;
+- lawn irrigation duration.
+
+The integration provides the weather inputs for those calculations, such as
+hourly temperature, humidity, wind speed, wind gusts, precipitation,
+precipitation probability, and cloud coverage. The actual control logic can then
+be implemented with Home Assistant helpers, templates, automations, or scripts.
 
 ## ✨ Features
 
@@ -16,8 +33,11 @@ is preserved in [NOTICE](NOTICE).
   (selectable per location). Hourly forecasts include temperature, humidity,
   wind speed, wind gusts, precipitation, precipitation probability, and cloud
   coverage when returned by MeteoBlue.
-- 🌱 **Pool and lawn focused hourly data** suitable for deriving irrigation or
-  outdoor-maintenance indices in Home Assistant automations/templates.
+- 🌱 **Pool and lawn focused hourly data** suitable for deriving runtime
+  indicators in Home Assistant automations/templates for:
+  - pool circulation pumps, including saltwater and standard pool setups;
+  - salt chlorinators;
+  - lawn irrigation duration.
 - 🖼️ **Meteogram images** — the 7-day extended meteogram, available in both light
   and dark variants. The dark variant is generated locally by inverting the
   light image while preserving hue and saturation, so it stays readable in

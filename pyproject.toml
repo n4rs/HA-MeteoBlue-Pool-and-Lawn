@@ -1,7 +1,7 @@
 [project]
 name = "HomeAssistant-Pool-and-Lawn"
 version = "0.2.0"
-description = "Pool and lawn irrigation weather data integration for Home Assistant"
+description = "Pool pump, salt chlorinator, and lawn irrigation runtime indicators for Home Assistant"
 readme = "README.md"
 requires-python = ">=3.13.2"
 dependencies = [
