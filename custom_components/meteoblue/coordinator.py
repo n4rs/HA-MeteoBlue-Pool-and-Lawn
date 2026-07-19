@@ -39,6 +39,7 @@ from .api import (
     MeteoBlueApiTimeoutError,
 )
 from .const import (
+    CONF_ENABLE_HOURLY_CLOUDS_AND_WIND,
     CONF_FORECAST_TYPE,
     CONF_FORECAST_UPDATE_INTERVAL,
     CONF_LOCATION_MODE,
@@ -147,6 +148,10 @@ def _aggregate_hourly_to_daily(
 
         # Aggregate wind speed and bearing
         windspeeds = [v for e in entries if (v := e.get("windspeed")) is not None]
+        gusts = [v for e in entries if (v := e.get("gust")) is not None]
+        cloud_covers = [
+            v for e in entries if (v := e.get("totalcloudcover")) is not None
+        ]
         u = 0.0
         v_sum = 0.0
         for e in entries:
@@ -174,7 +179,11 @@ def _aggregate_hourly_to_daily(
             "windspeed_mean": (
                 sum(windspeeds) / len(windspeeds) if windspeeds else None
             ),
+            "gust_max": max(gusts) if gusts else None,
             "winddirection": bearing,
+            "totalcloudcover_mean": (
+                sum(cloud_covers) / len(cloud_covers) if cloud_covers else None
+            ),
             "condition": midday_entry.get("condition"),
         }
     return result
@@ -305,17 +314,23 @@ class ForecastCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         else:
             latitude = self.hass.config.latitude
             longitude = self.hass.config.longitude
-        package = (
-            ApiPackage.BASIC_1H
-            if data.get(CONF_FORECAST_TYPE) == FORECAST_TYPE_HOURLY
-            else ApiPackage.BASIC_DAY
-        )
+        if data.get(CONF_FORECAST_TYPE) == FORECAST_TYPE_HOURLY:
+            api_packages = [ApiPackage.BASIC_1H]
+            if data.get(CONF_ENABLE_HOURLY_CLOUDS_AND_WIND, True):
+                api_packages.extend(
+                    [
+                        ApiPackage.CLOUDS_1H,
+                        ApiPackage.WIND_1H,
+                    ]
+                )
+        else:
+            api_packages = [ApiPackage.BASIC_DAY]
         try:
             raw = await self._client.async_get_forecast(
                 latitude=latitude,
                 longitude=longitude,
                 asl=data.get(CONF_ELEVATION),
-                api_packages=[package],
+                api_packages=api_packages,
             )
         except MeteoBlueApiClientAuthenticationError as exception:
             raise ConfigEntryAuthFailed(exception) from exception

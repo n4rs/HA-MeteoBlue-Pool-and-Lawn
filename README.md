@@ -9,7 +9,9 @@ location through the UI.
 ## ✨ Features
 
 - 🌤️ **Weather entity** with current conditions and a daily or hourly forecast
-  (selectable per location).
+  (selectable per location). Hourly forecasts include temperature, humidity,
+  wind speed, wind gusts, precipitation, precipitation probability, and cloud
+  coverage when returned by MeteoBlue.
 - 🖼️ **Meteogram images** — the 7-day extended meteogram, available in both light
   and dark variants. The dark variant is generated locally by inverting the
   light image while preserving hue and saturation, so it stays readable in
@@ -67,7 +69,8 @@ Each location is a subentry on the API-key entry. Open the entry and choose
 | **Latitude / Longitude** *(custom mode)* | Picked via the map selector. |
 | **Elevation** *(custom mode, optional)* | Meters above sea level. |
 | **Enable forecast** | Whether to create the weather entity. |
-| **Forecast type** | `daily` or `hourly`. With `hourly`, the integration also exposes a daily forecast that it derives locally from the hourly data, so only one Forecast API call is made per update. |
+| **Forecast type** | `daily` or `hourly`. Daily forecasts use MeteoBlue's `basic-day` package. Hourly forecasts always use `basic-1h`, and the integration also exposes a daily forecast that it derives locally from the hourly data. |
+| **Additional hourly clouds and wind data** | Only shown for hourly forecasts. When enabled, the hourly Forecast API call adds `clouds-1h` and `wind-1h`, producing `basic-1h_clouds-1h_wind-1h`. |
 | **Forecast update interval** | Minimum 6 hours, default 6 hours. |
 | **Enable meteogram** | Whether to create the meteogram image entities. |
 | **Meteogram update interval** | Minimum 6 hours, default 6 hours. |
@@ -94,9 +97,33 @@ amount of credits. The cost of API calls used by this integration are:
 
 API package | Credits per request
 -- | --
-`basic_day` | 4000 credits/request
-`basic_1h` | 8000 credits/request
+`basic-day` | 4000 credits/request
+`basic-1h` | 8000 credits/request
+`clouds-1h` | Optional add-on for hourly forecast requests
+`wind-1h` | Optional add-on for hourly forecast requests
 `meteogram_extended` | 16000 credits/request
+
+Hourly forecasts always request `basic-1h`. If **Additional hourly clouds and
+wind data** is enabled, the integration requests `basic-1h_clouds-1h_wind-1h`
+in one Forecast API call so Home Assistant can receive hourly temperature,
+humidity, wind speed, wind gusts, precipitation, precipitation probability, and
+cloud coverage. Use the credits sensor and the MeteoBlue account dashboard to
+confirm the exact charge for your plan and API package combination.
+
+The weather entity exposes these values through Home Assistant's weather
+attributes and forecast service. For example, hourly `weather.get_forecasts`
+responses can include fields equivalent to:
+
+```yaml
+datetime: "2026-07-19T12:00:00+01:00"
+temperature: 31.2
+humidity: 42
+wind_speed: 4.3
+wind_gust_speed: 8.1
+cloud_coverage: 18
+precipitation: 0
+precipitation_probability: 5
+```
 
 ### ⏱️ Sizing your update intervals
 

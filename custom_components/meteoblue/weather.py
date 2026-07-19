@@ -199,9 +199,11 @@ class MeteoBlueWeather(MeteoBlueLocationEntity, WeatherEntity):
     def native_wind_gust_speed(self) -> float | None:
         """Return the current wind gust speed."""
         entry, is_hourly = self._current_entry()
-        if entry is None or is_hourly:
+        if entry is None:
             return None
-        return entry.get("windspeed_max")
+        if is_hourly:
+            return entry.get("gust")
+        return entry.get("gust_max")
 
     @property
     def wind_bearing(self) -> float | str | None:
@@ -214,7 +216,12 @@ class MeteoBlueWeather(MeteoBlueLocationEntity, WeatherEntity):
     @property
     def cloud_coverage(self) -> float | None:
         """Return the current cloud coverage."""
-        return None
+        entry, is_hourly = self._current_entry()
+        if entry is None:
+            return None
+        if is_hourly:
+            return entry.get("totalcloudcover")
+        return entry.get("totalcloudcover_mean")
 
     @property
     def uv_index(self) -> float | None:
@@ -241,20 +248,26 @@ class MeteoBlueWeather(MeteoBlueLocationEntity, WeatherEntity):
             return None
         entries = data.get("forecast_data_daily", {})
         cutoff = dt_util.now() - timedelta(days=1)
-        return [
-            Forecast(
-                datetime=key.isoformat(),
-                condition=entries[key].get("condition"),
-                native_temperature=entries[key].get("temperature_max"),
-                native_templow=entries[key].get("temperature_min"),
-                native_precipitation=entries[key].get("precipitation"),
-                precipitation_probability=entries[key].get("precipitation_probability"),
-                native_wind_speed=entries[key].get("windspeed_mean"),
-                wind_bearing=entries[key].get("winddirection"),
+        forecasts: list[Forecast] = []
+        for key in sorted(entries):
+            if key <= cutoff:
+                continue
+            entry = entries[key]
+            forecasts.append(
+                Forecast(
+                    datetime=key.isoformat(),
+                    condition=entry.get("condition"),
+                    native_temperature=entry.get("temperature_max"),
+                    native_templow=entry.get("temperature_min"),
+                    native_precipitation=entry.get("precipitation"),
+                    precipitation_probability=entry.get("precipitation_probability"),
+                    native_wind_speed=entry.get("windspeed_mean"),
+                    native_wind_gust_speed=entry.get("gust_max"),
+                    wind_bearing=entry.get("winddirection"),
+                    cloud_coverage=entry.get("totalcloudcover_mean"),
+                )
             )
-            for key in sorted(entries)
-            if key > cutoff
-        ]
+        return forecasts
 
     async def async_forecast_hourly(self) -> list[Forecast] | None:
         """Return the hourly forecast."""
@@ -263,19 +276,25 @@ class MeteoBlueWeather(MeteoBlueLocationEntity, WeatherEntity):
             return None
         entries = data.get("forecast_data_hourly", {})
         cutoff = dt_util.now() - timedelta(hours=1)
-        return [
-            Forecast(
-                datetime=key.isoformat(),
-                condition=entries[key].get("condition"),
-                native_temperature=entries[key].get("temperature"),
-                native_apparent_temperature=entries[key].get("felttemperature"),
-                native_precipitation=entries[key].get("precipitation"),
-                precipitation_probability=entries[key].get("precipitation_probability"),
-                native_pressure=entries[key].get("sealevelpressure"),
-                native_wind_speed=entries[key].get("windspeed"),
-                wind_bearing=entries[key].get("winddirection"),
-                humidity=entries[key].get("relativehumidity"),
+        forecasts: list[Forecast] = []
+        for key in sorted(entries):
+            if key <= cutoff:
+                continue
+            entry = entries[key]
+            forecasts.append(
+                Forecast(
+                    datetime=key.isoformat(),
+                    condition=entry.get("condition"),
+                    native_temperature=entry.get("temperature"),
+                    native_apparent_temperature=entry.get("felttemperature"),
+                    native_precipitation=entry.get("precipitation"),
+                    precipitation_probability=entry.get("precipitation_probability"),
+                    native_pressure=entry.get("sealevelpressure"),
+                    native_wind_speed=entry.get("windspeed"),
+                    native_wind_gust_speed=entry.get("gust"),
+                    wind_bearing=entry.get("winddirection"),
+                    humidity=entry.get("relativehumidity"),
+                    cloud_coverage=entry.get("totalcloudcover"),
+                )
             )
-            for key in sorted(entries)
-            if key > cutoff
-        ]
+        return forecasts

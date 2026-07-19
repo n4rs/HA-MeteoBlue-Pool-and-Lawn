@@ -39,6 +39,8 @@ class ApiPackage(Enum):
 
     BASIC_DAY = "basic-day"
     BASIC_1H = "basic-1h"
+    CLOUDS_1H = "clouds-1h"
+    WIND_1H = "wind-1h"
 
 
 class MeteoBlueApiClientError(Exception):

@@ -48,12 +48,14 @@
                     "data": {
                         "enable_forecast": "Увімкнути прогноз погоди",
                         "forecast_type": "Тип прогнозу",
-                        "forecast_update_interval": "Інтервал оновлення прогнозу"
+                        "forecast_update_interval": "Інтервал оновлення прогнозу",
+                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
                     },
                     "data_description": {
                         "enable_forecast": "Вмикає об'єкт погоди, який надає поточні умови та прогноз. Вимкніть, якщо потрібне лише зображення метеограми.",
                         "forecast_type": "Добовий (4000 кредитів/запит) або погодинний (8000 кредитів/запит). Якщо вибрано погодинний, добовий прогноз формується з погодинних даних — додатковий запит не потрібен.",
-                        "forecast_update_interval": "Як часто отримувати прогноз. Коротші інтервали швидше витрачають кредити. Мінімум 6 годин."
+                        "forecast_update_interval": "Як часто отримувати прогноз. Коротші інтервали швидше витрачають кредити. Мінімум 6 годин.",
+                        "enable_hourly_clouds_and_wind": "Only used with hourly forecasts. Adds the MeteoBlue clouds-1h and wind-1h packages to the basic-1h request so cloud coverage and wind gusts can be exposed."
                     }
                 },
                 "meteogram": {
@@ -72,6 +74,15 @@
                     "data": {
                         "name": "Назва",
                         "location_mode": "Джерело розташування"
+                    }
+                },
+                "hourly_packages": {
+                    "description": "Configure optional hourly forecast packages.",
+                    "data": {
+                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
+                    },
+                    "data_description": {
+                        "enable_hourly_clouds_and_wind": "Add the MeteoBlue clouds-1h and wind-1h packages to the basic-1h hourly request so cloud coverage and wind gusts can be exposed."
                     }
                 }
             },
