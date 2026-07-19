@@ -1,5 +1,8 @@
 # Copyright 2026 Dan Keder
 #
+# Modifications Copyright 2026 n4rs. All rights reserved.
+# See LICENSE for the terms that apply to HomeAssistant Pool and Lawn modifications.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -16,7 +19,7 @@
 # https://github.com/ludeeus/integration_blueprint/, which is licensed under
 # the MIT License.
 #
-"""Tests for meteoblue.image_utils."""
+"""Tests for pool_and_lawn.image_utils."""
 
 from __future__ import annotations
 
@@ -24,8 +27,8 @@ import warnings
 from io import BytesIO
 from pathlib import Path
 
-from meteoblue.image_utils import invert_png, remove_background
 from PIL import Image, ImageDraw
+from pool_and_lawn.image_utils import invert_png, remove_background
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 FIXTURE = Path(__file__).parent / "fixtures" / "meteogram_extended.png"

@@ -1,10 +1,31 @@
-# 🌦️ MeteoBlue for Home Assistant
+# 🌿 HomeAssistant Pool and Lawn
 
-A Home Assistant integration for the [MeteoBlue](https://www.meteoblue.com/)
-weather service. It exposes current conditions and forecasts as a weather
-entity, renders 7-day extended meteograms as image entities (light and dark
-variants), and tracks API credit usage as a sensor — all configured per
-location through the UI.
+**HomeAssistant Pool and Lawn** is a Home Assistant custom integration for
+building weather-based operating-time indicators for pool and lawn equipment. It
+uses the [MeteoBlue](https://www.meteoblue.com/) Forecast, Image, and Account
+APIs to expose weather forecasts, meteograms, and API credit usage in Home
+Assistant.
+
+This project started as a fork of
+[HomeAssistant-MeteoBlue](https://github.com/dankeder/HomeAssistant-MeteoBlue)
+by Dan Keder. Attribution to the original project and other upstream components
+is preserved in [NOTICE](NOTICE).
+
+## 🎯 Project goal
+
+The goal of this integration is to make MeteoBlue weather data available in Home
+Assistant in a form that can be used to calculate practical runtime indicators
+for outdoor equipment, including:
+
+- pool pump operating time for saltwater pools;
+- pool pump operating time for standard/chlorine pools;
+- salt chlorinator operating time;
+- lawn irrigation duration.
+
+The integration provides the weather inputs for those calculations, such as
+hourly temperature, humidity, wind speed, wind gusts, precipitation,
+precipitation probability, and cloud coverage. The actual control logic can then
+be implemented with Home Assistant helpers, templates, automations, or scripts.
 
 ## ✨ Features
 
@@ -12,6 +33,14 @@ location through the UI.
   (selectable per location). Hourly forecasts include temperature, humidity,
   wind speed, wind gusts, precipitation, precipitation probability, and cloud
   coverage when returned by MeteoBlue.
+<<<<<<< ours
+=======
+- 🌱 **Pool and lawn focused hourly data** suitable for deriving runtime
+  indicators in Home Assistant automations/templates for:
+  - pool circulation pumps, including saltwater and standard pool setups;
+  - salt chlorinators;
+  - lawn irrigation duration.
+>>>>>>> theirs
 - 🖼️ **Meteogram images** — the 7-day extended meteogram, available in both light
   and dark variants. The dark variant is generated locally by inverting the
   light image while preserving hue and saturation, so it stays readable in
@@ -26,8 +55,8 @@ location through the UI.
 
 ## 📋 Requirements
 
-- Home Assistant **2026.3.2** or newer.
-- Python **3.14.2** or newer (matches the supported Home Assistant runtime).
+- Home Assistant **2025.3.0** or newer.
+- Python version compatible with your Home Assistant runtime.
 - A MeteoBlue API key from [my.meteoblue.com](https://my.meteoblue.com).
 
 ## 📦 Installation
@@ -35,23 +64,25 @@ location through the UI.
 ### 🏪 HACS (recommended)
 
 1. In HACS, open **Integrations** → menu → **Custom repositories**.
-2. Add `https://github.com/dankeder/HomeAssistant-MeteoBlue` as an
+2. Add `https://github.com/n4rs/HA-MeteoBlue-Pool-and-Lawn` as an
    **Integration** repository.
-3. Install **MeteoBlue** from the HACS list and restart Home Assistant.
+3. Install **HomeAssistant Pool and Lawn** from the HACS list and restart Home
+   Assistant.
 
 ### 🔧 Manual
 
-1. Copy [custom_components/meteoblue/](custom_components/meteoblue/) into your
-   Home Assistant `config/custom_components/` directory.
+1. Copy [custom_components/pool_and_lawn/](custom_components/pool_and_lawn/) into
+   your Home Assistant `config/custom_components/` directory.
 2. Restart Home Assistant.
 
 ## ⚙️ Configuration
 
 ### 🔑 1. Add the API key
 
-**Settings → Devices & Services → Add Integration → MeteoBlue**, then enter:
+**Settings → Devices & Services → Add Integration → HomeAssistant Pool and Lawn**,
+then enter:
 
-- **Name** — a label for this API key (e.g. *MeteoBlue*).
+- **Name** — a label for this API key (e.g. *Pool and Lawn*).
 - **API key** — your key from [my.meteoblue.com](https://my.meteoblue.com).
 
 The key is validated against the MeteoBlue Account API before the entry is
@@ -70,7 +101,11 @@ Each location is a subentry on the API-key entry. Open the entry and choose
 | **Elevation** *(custom mode, optional)* | Meters above sea level. |
 | **Enable forecast** | Whether to create the weather entity. |
 | **Forecast type** | `daily` or `hourly`. Daily forecasts use MeteoBlue's `basic-day` package. Hourly forecasts always use `basic-1h`, and the integration also exposes a daily forecast that it derives locally from the hourly data. |
+<<<<<<< ours
 | **Additional hourly clouds and wind data** | Only shown for hourly forecasts. When enabled, the hourly Forecast API call adds `clouds-1h` and `wind-1h`, producing `basic-1h_clouds-1h_wind-1h`. |
+=======
+| **Additional hourly clouds and wind data** | Only shown after choosing an enabled hourly forecast. When enabled, the hourly Forecast API call adds `clouds-1h` and `wind-1h`, producing `basic-1h_clouds-1h_wind-1h`. |
+>>>>>>> theirs
 | **Forecast update interval** | Minimum 6 hours, default 6 hours. |
 | **Enable meteogram** | Whether to create the meteogram image entities. |
 | **Meteogram update interval** | Minimum 6 hours, default 6 hours. |
@@ -85,10 +120,10 @@ For a location named *Home*, the integration creates:
 
 | Entity ID | Description |
 | -- | -- |
-| `weather.meteoblue_home_weather` | Current conditions and forecast. Only created when **Enable forecast** is on. |
-| `image.meteoblue_home_meteogram` | 7-day extended meteogram (light). Only created when **Enable meteogram** is on. |
-| `image.meteoblue_home_meteogram_dark` | Same meteogram, tone-inverted for dark themes. |
-| `sensor.meteoblue_home_credits_used` | Total API credits consumed by your account, increasing over time. |
+| `weather.pool_and_lawn_home_weather` | Current conditions and forecast. Only created when **Enable forecast** is on. |
+| `image.pool_and_lawn_home_meteogram` | 7-day extended meteogram (light). Only created when **Enable meteogram** is on. |
+| `image.pool_and_lawn_home_meteogram_dark` | Same meteogram, tone-inverted for dark themes. |
+| `sensor.pool_and_lawn_home_credits_used` | Total API credits consumed by your account, increasing over time. |
 
 ## 💳 MeteoBlue API credits
 
@@ -124,6 +159,7 @@ cloud_coverage: 18
 precipitation: 0
 precipitation_probability: 5
 ```
+<<<<<<< ours
 
 ### ⏱️ Sizing your update intervals
 
@@ -143,6 +179,8 @@ per day**. A few worked examples for one location:
 
 The credits sensor lets you confirm actual consumption against these
 estimates.
+=======
+>>>>>>> theirs
 
 ## 🛠️ Development
 
@@ -154,7 +192,7 @@ The repository ships a small set of helper scripts in [scripts/](scripts/):
 - [scripts/lint](scripts/lint) — run `ruff format` and `ruff check`.
 - [scripts/test](scripts/test) — run the test suite with `pytest`.
 
-Set `METEOBLUE_USE_FAKE_CLIENT=1` before [scripts/run](scripts/run) to load
+Set `POOL_AND_LAWN_USE_FAKE_CLIENT=1` before [scripts/run](scripts/run) to load
 `FakeMeteoBlueApiClient`, which serves canned responses from
 [tests/fixtures/](tests/fixtures/) instead of calling the MeteoBlue API.
 
@@ -164,8 +202,11 @@ Set `METEOBLUE_USE_FAKE_CLIENT=1` before [scripts/run](scripts/run) to load
   and [OpenAPI spec](https://my.meteoblue.com/packages/redoc#tag/Overview-Structure).
 - MeteoBlue [Image API documentation](https://docs.meteoblue.com/en/weather-apis/images-api/overview).
 - MeteoBlue [Account API documentation](https://docs.meteoblue.com/en/weather-apis/further-apis/account-api).
-- [Issue tracker](https://github.com/dankeder/HomeAssistant-MeteoBlue/issues).
+- [Issue tracker](https://github.com/n4rs/HA-MeteoBlue-Pool-and-Lawn/issues).
 
-## 📄 License
+## 📄 License and attribution
 
-Licensed under the [Apache License, Version 2.0](LICENSE).
+This repository uses a composite license. Original upstream code remains under
+its original Apache 2.0/MIT terms. HomeAssistant Pool and Lawn modifications and
+additions are Copyright 2026 n4rs. All rights reserved. See [LICENSE](LICENSE)
+and [NOTICE](NOTICE) for details.

@@ -1,5 +1,8 @@
 # Copyright 2026 Dan Keder
 #
+# Modifications Copyright 2026 n4rs. All rights reserved.
+# See LICENSE for the terms that apply to HomeAssistant Pool and Lawn modifications.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -25,12 +28,12 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 from dateutil.tz import tzoffset
-from meteoblue.const import FORECAST_TYPE_DAILY, FORECAST_TYPE_HOURLY
+from pool_and_lawn.const import FORECAST_TYPE_DAILY, FORECAST_TYPE_HOURLY
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from meteoblue.weather import MeteoBlueWeather
+    from pool_and_lawn.weather import MeteoBlueWeather
 
 
 INSTANT_PROPERTIES = (

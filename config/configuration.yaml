@@ -9,4 +9,4 @@ homeassistant:
 logger:
   default: info
   logs:
-    custom_components.meteoblue: debug
+    custom_components.pool_and_lawn: debug

@@ -1,5 +1,11 @@
 # Copyright 2026 Dan Keder
 #
+<<<<<<< ours
+=======
+# Modifications Copyright 2026 n4rs. All rights reserved.
+# See LICENSE for the terms that apply to HomeAssistant Pool and Lawn modifications.
+#
+>>>>>>> theirs
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -23,8 +29,13 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
+<<<<<<< ours
 from meteoblue.config_flow import ForecastLocationSubentryFlowHandler
 from meteoblue.const import (
+=======
+from pool_and_lawn.config_flow import ForecastLocationSubentryFlowHandler
+from pool_and_lawn.const import (
+>>>>>>> theirs
     CONF_ENABLE_FORECAST,
     CONF_ENABLE_HOURLY_CLOUDS_AND_WIND,
     CONF_FORECAST_TYPE,

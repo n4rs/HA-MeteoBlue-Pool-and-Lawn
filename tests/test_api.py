@@ -1,5 +1,8 @@
 # Copyright 2026 Dan Keder
 #
+# Modifications Copyright 2026 n4rs. All rights reserved.
+# See LICENSE for the terms that apply to HomeAssistant Pool and Lawn modifications.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -23,17 +26,17 @@ from __future__ import annotations
 from typing import Any
 
 import httpx
-import meteoblue.api
+import pool_and_lawn.api
 import pytest
 
-ApiPackage = meteoblue.api.ApiPackage
-MeteoBlueApiClient = meteoblue.api.MeteoBlueApiClient
-MeteoBlueApiClientError = meteoblue.api.MeteoBlueApiClientError
+ApiPackage = pool_and_lawn.api.ApiPackage
+MeteoBlueApiClient = pool_and_lawn.api.MeteoBlueApiClient
+MeteoBlueApiClientError = pool_and_lawn.api.MeteoBlueApiClientError
 MeteoBlueApiClientCommunicationError = (
-    meteoblue.api.MeteoBlueApiClientCommunicationError
+    pool_and_lawn.api.MeteoBlueApiClientCommunicationError
 )
 MeteoBlueApiClientAuthenticationError = (
-    meteoblue.api.MeteoBlueApiClientAuthenticationError
+    pool_and_lawn.api.MeteoBlueApiClientAuthenticationError
 )
 
 
@@ -282,7 +285,7 @@ async def test_meteogram_auth_errors_raise_authentication_error(
         )
 
 
-PAGE_SIZE = meteoblue.api.ACCOUNT_USAGE_PAGE_SIZE
+PAGE_SIZE = pool_and_lawn.api.ACCOUNT_USAGE_PAGE_SIZE
 
 
 def _make_item(index: int) -> dict[str, Any]:

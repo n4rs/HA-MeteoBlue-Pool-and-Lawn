@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 # Copyright 2026 Dan Keder
 #
 # Modifications Copyright 2026 n4rs. All rights reserved.
@@ -21,16 +19,34 @@
 # https://github.com/ludeeus/integration_blueprint/, which is licensed under
 # the MIT License.
 #
+"""Custom types for Pool and Lawn."""
 
-set -e
+from __future__ import annotations
 
-cd "$(dirname "$0")/.."
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
-# Set the path to custom_components
-## This lets us have the structure we want <root>/custom_components/pool_and_lawn
-## while at the same time have Home Assistant configuration inside <root>/config
-## without resulting to symlinks.
-export PYTHONPATH="${PYTHONPATH}:${PWD}/custom_components"
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
 
-# Run tests
-uv run pytest "$@"
+    from .api import MeteoBlueApiClient
+    from .coordinator import (
+        AccountUsageCoordinator,
+        ForecastCoordinator,
+        MeteogramCoordinator,
+    )
+
+
+type MeteoBlueConfigEntry = ConfigEntry[MeteoBlueData]
+
+
+@dataclass
+class MeteoBlueData:
+    """Runtime data for a MeteoBlue API-key config entry."""
+
+    client: MeteoBlueApiClient
+    account_coordinator: AccountUsageCoordinator
+    location_coordinators: dict[str, ForecastCoordinator] = field(default_factory=dict)
+    meteogram_coordinators: dict[str, MeteogramCoordinator] = field(
+        default_factory=dict
+    )

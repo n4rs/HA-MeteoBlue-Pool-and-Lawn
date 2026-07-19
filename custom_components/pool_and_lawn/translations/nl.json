@@ -1,0 +1,113 @@
+{
+    "config": {
+        "initiate_flow": {
+            "user": "API-sleutel toevoegen"
+        },
+        "step": {
+            "user": {
+                "description": "Als je hulp nodig hebt bij de configuratie, kijk dan hier: {documentation_url}",
+                "data": {
+                    "name": "Naam",
+                    "api_key": "API-sleutel"
+                }
+            }
+        },
+        "error": {
+            "auth": "Ongeldige API-sleutel.",
+            "connection": "Kan geen verbinding maken met de server.",
+            "unknown": "Er is een onbekende fout opgetreden."
+        },
+        "abort": {
+            "already_configured": "Deze API-sleutel is al geconfigureerd."
+        }
+    },
+    "config_subentries": {
+        "forecast_location": {
+            "initiate_flow": {
+                "user": "Voorspellingslocatie toevoegen",
+                "reconfigure": "Voorspellingslocatie opnieuw configureren"
+            },
+            "entry_type": "Voorspellingslocatie",
+            "step": {
+                "user": {
+                    "description": "Geef je locatie een naam en kies of je de locatie van Home Assistant of een aangepaste locatie wilt gebruiken.",
+                    "data": {
+                        "name": "Naam",
+                        "location_mode": "Locatiebron"
+                    }
+                },
+                "location": {
+                    "description": "Kies de locatie waarvoor de voorspelling moet worden opgehaald.",
+                    "data": {
+                        "location": "Locatie",
+                        "elevation": "Hoogte boven zeeniveau (m, optioneel)"
+                    }
+                },
+                "forecast": {
+                    "description": "Configureer de weersvoorspelling. Elke aanvraag kost MeteoBlue-credits: dagelijks 4000, per uur 8000.",
+                    "data": {
+                        "enable_forecast": "Weersvoorspelling inschakelen",
+                        "forecast_type": "Type voorspelling",
+                        "forecast_update_interval": "Bijwerkinterval van de voorspelling",
+                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
+                    },
+                    "data_description": {
+                        "enable_forecast": "Schakelt de weerentiteit in die de actuele omstandigheden en de voorspelling toont. Schakel uit als je alleen de meteogramafbeelding wilt.",
+                        "forecast_type": "Dagelijks (4000 credits/aanvraag) of per uur (8000 credits/aanvraag). Wanneer Per uur is geselecteerd, wordt de dagvoorspelling samengesteld uit de uurgegevens — er is geen extra aanvraag nodig.",
+                        "forecast_update_interval": "Hoe vaak de voorspelling wordt opgehaald. Kortere intervallen verbruiken credits sneller. Minimaal 6 uur.",
+                        "enable_hourly_clouds_and_wind": "Only used with hourly forecasts. Adds the MeteoBlue clouds-1h and wind-1h packages to the basic-1h request so cloud coverage and wind gusts can be exposed."
+                    }
+                },
+                "meteogram": {
+                    "description": "Configureer de meteogramafbeelding. Elke aanvraag kost 16000 MeteoBlue-credits.",
+                    "data": {
+                        "enable_meteogram": "Meteogram inschakelen",
+                        "meteogram_update_interval": "Bijwerkinterval van het meteogram"
+                    },
+                    "data_description": {
+                        "enable_meteogram": "Schakelt het ophalen van een meteogram van 7 dagen in.",
+                        "meteogram_update_interval": "Hoe vaak het meteogram wordt opgehaald. Elke aanvraag kost 16000 credits. Minimaal 6 uur."
+                    }
+                },
+                "reconfigure": {
+                    "description": "Geef je locatie een naam en kies of je de locatie van Home Assistant of een aangepaste locatie wilt gebruiken.",
+                    "data": {
+                        "name": "Naam",
+                        "location_mode": "Locatiebron"
+                    }
+                },
+                "hourly_packages": {
+                    "description": "Configure optional hourly forecast packages.",
+                    "data": {
+                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
+                    },
+                    "data_description": {
+                        "enable_hourly_clouds_and_wind": "Add the MeteoBlue clouds-1h and wind-1h packages to the basic-1h hourly request so cloud coverage and wind gusts can be exposed."
+                    }
+                }
+            },
+            "error": {
+                "location_required": "Kies een locatie of schakel over naar \"Locatie van Home Assistant gebruiken\".",
+                "update_interval_too_short": "Het bijwerkinterval moet minimaal 6 uur zijn."
+            },
+            "abort": {
+                "already_configured": "Deze locatie is al geconfigureerd.",
+                "reconfigure_successful": "De herconfiguratie is geslaagd."
+            }
+        }
+    },
+    "selector": {
+        "location_mode": {
+            "options": {
+                "auto": "Locatie van Home Assistant gebruiken",
+                "custom": "Locatie kiezen"
+            }
+        },
+        "forecast_type": {
+            "options": {
+                "daily": "Dagelijks",
+                "hourly": "Per uur"
+            }
+        }
+    }
+}

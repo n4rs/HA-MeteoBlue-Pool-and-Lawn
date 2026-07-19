@@ -1,5 +1,8 @@
 # Copyright 2026 Dan Keder
 #
+# Modifications Copyright 2026 n4rs. All rights reserved.
+# See LICENSE for the terms that apply to HomeAssistant Pool and Lawn modifications.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -26,12 +29,12 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 
 import httpx
-import meteoblue.api
+import pool_and_lawn.api
 import pytest
 from homeassistant.components.weather import WeatherEntityDescription
-from meteoblue.const import CONF_FORECAST_TYPE, FORECAST_TYPE_DAILY
-from meteoblue.coordinator import _reshape_forecast_payload
-from meteoblue.weather import MeteoBlueWeather
+from pool_and_lawn.const import CONF_FORECAST_TYPE, FORECAST_TYPE_DAILY
+from pool_and_lawn.coordinator import _reshape_forecast_payload
+from pool_and_lawn.weather import MeteoBlueWeather
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Callable
@@ -89,7 +92,7 @@ def make_weather() -> Callable[..., MeteoBlueWeather]:
         coordinator.subentry.title = "Test Location"
         coordinator.subentry.data = {CONF_FORECAST_TYPE: forecast_type}
         coordinator.data = data
-        description = WeatherEntityDescription(key="weather", name="MeteoBlue")
+        description = WeatherEntityDescription(key="weather", name="Pool and Lawn")
         return MeteoBlueWeather(
             coordinator=coordinator,
             entity_description=description,
@@ -111,7 +114,7 @@ async def make_client() -> AsyncIterator[
     ) -> Any:
         client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
         clients.append(client)
-        return meteoblue.api.MeteoBlueApiClient(client=client, api_key="test-key")
+        return pool_and_lawn.api.MeteoBlueApiClient(client=client, api_key="test-key")
 
     yield _factory
 

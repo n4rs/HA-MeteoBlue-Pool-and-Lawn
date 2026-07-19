@@ -1,5 +1,8 @@
 # Copyright 2026 Dan Keder
 #
+# Modifications Copyright 2026 n4rs. All rights reserved.
+# See LICENSE for the terms that apply to HomeAssistant Pool and Lawn modifications.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -29,8 +32,14 @@ from unittest.mock import MagicMock
 
 import pytest
 from dateutil.tz import tzoffset
+<<<<<<< ours
 from meteoblue.api import ApiPackage
 from meteoblue.const import (
+=======
+from PIL import Image
+from pool_and_lawn.api import ApiPackage
+from pool_and_lawn.const import (
+>>>>>>> theirs
     CONF_ENABLE_HOURLY_CLOUDS_AND_WIND,
     CONF_FORECAST_TYPE,
     FORECAST_TYPE_DAILY,
@@ -38,13 +47,16 @@ from meteoblue.const import (
     PICTOCODE_DAILY_TO_CONDITION,
     PICTOCODE_HOURLY_TO_CONDITION,
 )
+<<<<<<< ours
 from meteoblue.coordinator import (
+=======
+from pool_and_lawn.coordinator import (
+>>>>>>> theirs
     ForecastCoordinator,
     MeteogramCoordinator,
     MeteogramImageSet,
     _reshape_forecast_payload,
 )
-from PIL import Image
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 METEOGRAM_FIXTURE = Path(__file__).parent / "fixtures" / "meteogram_extended.png"

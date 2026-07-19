@@ -1,4 +1,20 @@
-This project contains components originally from
+HomeAssistant Pool and Lawn
+
+Copyright 2026 n4rs. All rights reserved for modifications and additions made
+for HomeAssistant Pool and Lawn, except where otherwise required by upstream
+licenses.
+
+Upstream attribution
+--------------------
+
+This project started as a fork of HomeAssistant-MeteoBlue by Dan Keder:
+https://github.com/dankeder/HomeAssistant-MeteoBlue
+
+Original HomeAssistant-MeteoBlue code and content were released under the
+Apache License, Version 2.0. A copy of that license is included in
+LICENSE-APACHE-2.0.
+
+This project also contains components originally from
 https://github.com/ludeeus/integration_blueprint/ licensed under the MIT
 License.
 
@@ -24,6 +40,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
----
-
-All other files and modifications are licensed under the Apache License 2.0.

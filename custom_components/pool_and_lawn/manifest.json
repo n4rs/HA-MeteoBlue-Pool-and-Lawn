@@ -1,0 +1,17 @@
+{
+  "domain": "pool_and_lawn",
+  "name": "HomeAssistant Pool and Lawn",
+  "codeowners": [
+    "@n4rs"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/n4rs/HA-MeteoBlue-Pool-and-Lawn/blob/master/README.md",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/n4rs/HA-MeteoBlue-Pool-and-Lawn/issues",
+  "requirements": [
+    "python-dateutil",
+    "Pillow",
+    "numpy"
+  ],
+  "version": "0.2.0"
+}

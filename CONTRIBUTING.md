@@ -1,61 +1,30 @@
 # Contribution guidelines
 
-Contributing to this project should be as easy and transparent as possible, whether it's:
+This repository is maintained by @n4rs as **HomeAssistant Pool and Lawn**.
 
-- Reporting a bug
-- Discussing the current state of the code
-- Submitting a fix
-- Proposing new features
+## Issues and feature requests
 
-## Github is used for everything
+Use GitHub issues in this repository to report bugs or request features:
 
-Github is used to host code, to track issues and feature requests, as well as accept pull requests.
+https://github.com/n4rs/HA-MeteoBlue-Pool-and-Lawn/issues
 
-Pull requests are the best way to propose changes to the codebase.
+## Pull requests
 
-1. Fork the repo and create your branch from `main`.
-2. If you've changed something, update the documentation.
-3. Make sure your code lints (using `scripts/lint`).
-4. Test you contribution.
-5. Issue that pull request!
+Pull requests may be reviewed at the maintainer's discretion. By submitting a
+pull request, you agree that your contribution may be incorporated into this
+project under the repository's composite license, including the proprietary
+terms that apply to HomeAssistant Pool and Lawn modifications and additions.
 
-## Any contributions you make will be under the Apache 2.0 Software License
+## Development
 
-In short, when you submit code changes, your submissions are understood to be under the same [Apache 2.0 License](https://choosealicense.com/licenses/apache-2.0/) that covers the project. Feel free to contact the maintainers if that's a concern.
+Use the project scripts where possible:
 
-## Report bugs using Github's [issues](../../issues)
+- `scripts/setup` to install dependencies with `uv sync --frozen`.
+- `scripts/test` to run the test suite.
+- `scripts/lint` to format and lint the code.
 
-GitHub issues are used to track public bugs.
-Report a bug by [opening a new issue](../../issues/new/choose); it's that easy!
+## Upstream attribution
 
-## Write bug reports with detail, background, and sample code
-
-**Great Bug Reports** tend to have:
-
-- A quick summary and/or background
-- Steps to reproduce
-  - Be specific!
-  - Give sample code if you can.
-- What you expected would happen
-- What actually happens
-- Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
-
-People *love* thorough bug reports. I'm not even kidding.
-
-## Use a Consistent Coding Style
-
-Use [ruff](https://docs.astral.sh/ruff/) to make sure the code follows the style.
-
-## Test your code modification
-
-This custom component is based on [integration_blueprint template](https://github.com/ludeeus/integration_blueprint).
-
-It comes with development environment in a container, easy to launch
-if you use Visual Studio Code. With this container you will have a stand alone
-Home Assistant instance running and already configured with the included
-[`configuration.yaml`](./config/configuration.yaml)
-file.
-
-## License
-
-By contributing, you agree that your contributions will be licensed under its Apache 2.0 License.
+This project started as a fork of HomeAssistant-MeteoBlue by Dan Keder and also
+contains components derived from ludeeus/integration_blueprint. See `NOTICE` and
+`LICENSE` for details.
