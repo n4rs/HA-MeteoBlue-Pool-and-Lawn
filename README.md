@@ -102,7 +102,12 @@ Each location is a subentry on the API-key entry. Open the entry and choose
 | **Enable forecast** | Whether to create the weather entity. |
 | **Forecast type** | `daily` or `hourly`. Daily forecasts use MeteoBlue's `basic-day` package. Hourly forecasts always use `basic-1h`, and the integration also exposes a daily forecast that it derives locally from the hourly data. |
 | **Additional hourly clouds and wind data** | Only shown after choosing an enabled hourly forecast. This must be enabled to provide data for lawn-irrigation and pool-control calculations. The hourly Forecast API call adds `clouds-1h` and `wind-1h`, producing `basic-1h_clouds-1h_wind-1h`. |
-| **Pool configuration** *(hourly only, optional)* | Stores the pool volume (m³), pump capacity (m³/h), and chlorinator capacity (g/h) for future pool runtime calculations. Pool-control data requires **Additional hourly clouds and wind data** to be enabled. |
+| **Pool configuration** *(hourly only, optional)* | Enables seven daily saltwater-pool pump runtime estimates. Requires **Additional hourly clouds and wind data**. |
+| **Pool volume** | Water volume in m³; must be greater than zero. |
+| **Nominal pump flow** | Pump flow in m³/h. Used only for hydraulic diagnostics, never as a runtime minimum. |
+| **Hydraulic efficiency factor** | Effective-to-nominal flow ratio from `0.40` to `1.00`; default `0.75`. Diagnostic only. |
+| **Nominal chlorinator output** | Chlorine production at 100% output in g/h; must be greater than zero. |
+| **Daily free chlorine target** | Assumed starting and ending free chlorine in ppm; default `2.0`. It is not added to daily demand. |
 | **Forecast update interval** | Minimum 6 hours, default 6 hours. |
 
 The 6-hour minimum reflects MeteoBlue's update cadence: forecast models run
@@ -119,6 +124,8 @@ For a location named *Home*, the integration creates:
 | `sensor.pool_and_lawn_home_credits_used` | Total API credits consumed by your account, increasing over time. |
 | `sensor.pool_and_lawn_home_irrigation_level_0` | Irrigation need for today, from 0 to 5. Requires an hourly forecast with the `clouds-1h` and `wind-1h` packages enabled. |
 | `sensor.pool_and_lawn_home_irrigation_level_1` … `_6` | Irrigation need for the following six local forecast dates. Missing offsets remain unavailable. |
+| `sensor.pool_and_lawn_home_pool_pump_hours_0` | Recommended saltwater-pool pump hours for today. Requires pool configuration. |
+| `sensor.pool_and_lawn_home_pool_pump_hours_1` … `_6` | Recommended pump hours for the following six local forecast dates. |
 
 ### Lawn irrigation need
 
@@ -181,6 +188,54 @@ final_level: 4
 If an essential input, a usable solar period, or an explicit supported wind unit
 is missing, the relevant entity is unavailable and exposes an
 `unavailable_reason` attribute instead of inventing weather values.
+
+### Saltwater pool pump runtime estimate
+
+When pool configuration is enabled, the integration creates seven sensors with
+stable offsets `0` through `6`. They are local, open-loop weather estimates: no
+pump is controlled and no real free-chlorine, ORP, CYA, water-temperature, or
+pool-usage measurement is available. The result is not a guarantee that actual
+free chlorine will reach the configured target.
+
+For each local forecast date, hourly values are aggregated into maximum air
+temperature, maximum daytime UV, daylight duration from `isdaylight`, mean
+daytime cloud cover, total precipitation, mean daytime wind, and maximum daytime
+gust. Wind is converted to km/h only from MeteoBlue's explicit units. Astral is
+used for sunrise and sunset only when `isdaylight` is absent. Missing UV is
+estimated from daylight duration and cloud cover; a day is unavailable when
+temperature, the solar period, or both UV and cloud cover are unavailable.
+
+Daily chlorine demand starts at `0.7 ppm`. The specified UV, temperature,
+daylight, cloud, rain, and mean-wind bands adjust it, after which it is limited
+to `0.4–2.8 ppm`. Chlorine production is:
+
+```text
+chlorine_production_ppm_per_hour = chlorinator_output_gh / pool_volume_m3
+```
+
+The assumed free chlorine starts and ends at the configured target, so only the
+estimated daily loss is replaced. The target is not added to demand:
+
+```text
+chlorination_hours = estimated_chlorine_demand_ppm / chlorine_production_ppm_per_hour
+recommended_pump_hours = min(24, chlorination_hours)
+```
+
+The final state is rounded to one decimal place. There is deliberately no
+turnover or circulation minimum: recommended pump hours are exactly the required
+chlorination hours, capped only at 24 hours. `runtime_limited` identifies days
+where the uncapped result exceeds 24 hours.
+
+Hydraulic values are attributes only:
+
+```text
+effective_flow_m3h = pump_nominal_flow_m3h * hydraulic_efficiency_factor
+estimated_circulated_volume_m3 = effective_flow_m3h * recommended_pump_hours
+estimated_turnovers = estimated_circulated_volume_m3 / pool_volume_m3
+```
+
+Changing nominal flow or hydraulic efficiency changes these diagnostics but can
+never increase or reduce `recommended_pump_hours`.
 
 ## 💳 MeteoBlue API credits
 

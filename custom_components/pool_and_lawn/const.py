@@ -41,9 +41,14 @@ CONF_FORECAST_UPDATE_INTERVAL = "forecast_update_interval"
 CONF_ENABLE_FORECAST = "enable_forecast"
 CONF_ENABLE_HOURLY_CLOUDS_AND_WIND = "enable_hourly_clouds_and_wind"
 CONF_ENABLE_POOL = "enable_pool"
-CONF_POOL_VOLUME = "pool_volume"
-CONF_POOL_PUMP_CAPACITY = "pool_pump_capacity"
-CONF_POOL_CHLORINATOR_CAPACITY = "pool_chlorinator_capacity"
+CONF_POOL_VOLUME_M3 = "pool_volume_m3"
+CONF_PUMP_NOMINAL_FLOW_M3H = "pump_nominal_flow_m3h"
+CONF_HYDRAULIC_EFFICIENCY_FACTOR = "hydraulic_efficiency_factor"
+CONF_CHLORINATOR_OUTPUT_GH = "chlorinator_output_gh"
+CONF_TARGET_FREE_CHLORINE_PPM = "target_free_chlorine_ppm"
+
+DEFAULT_HYDRAULIC_EFFICIENCY_FACTOR = 0.75
+DEFAULT_TARGET_FREE_CHLORINE_PPM = 2.0
 
 SUBENTRY_TYPE_FORECAST_LOCATION = "forecast_location"
 

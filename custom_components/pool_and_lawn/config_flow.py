@@ -50,15 +50,19 @@ from .api import (
     MeteoBlueApiClientError,
 )
 from .const import (
+    CONF_CHLORINATOR_OUTPUT_GH,
     CONF_ENABLE_FORECAST,
     CONF_ENABLE_HOURLY_CLOUDS_AND_WIND,
     CONF_ENABLE_POOL,
     CONF_FORECAST_TYPE,
     CONF_FORECAST_UPDATE_INTERVAL,
+    CONF_HYDRAULIC_EFFICIENCY_FACTOR,
     CONF_LOCATION_MODE,
-    CONF_POOL_CHLORINATOR_CAPACITY,
-    CONF_POOL_PUMP_CAPACITY,
-    CONF_POOL_VOLUME,
+    CONF_POOL_VOLUME_M3,
+    CONF_PUMP_NOMINAL_FLOW_M3H,
+    CONF_TARGET_FREE_CHLORINE_PPM,
+    DEFAULT_HYDRAULIC_EFFICIENCY_FACTOR,
+    DEFAULT_TARGET_FREE_CHLORINE_PPM,
     DOMAIN,
     FORECAST_TYPE_DAILY,
     FORECAST_TYPE_HOURLY,
@@ -313,9 +317,7 @@ class ForecastLocationSubentryFlowHandler(ConfigSubentryFlow):
             ):
                 self._data.pop(CONF_ENABLE_HOURLY_CLOUDS_AND_WIND, None)
                 self._data.pop(CONF_ENABLE_POOL, None)
-                self._data.pop(CONF_POOL_VOLUME, None)
-                self._data.pop(CONF_POOL_PUMP_CAPACITY, None)
-                self._data.pop(CONF_POOL_CHLORINATOR_CAPACITY, None)
+                self._remove_pool_settings()
 
             if not errors:
                 if (
@@ -366,17 +368,22 @@ class ForecastLocationSubentryFlowHandler(ConfigSubentryFlow):
         user_input: dict | None = None,
     ) -> SubentryFlowResult:
         """Collect optional hourly forecast package configuration."""
+        errors: dict[str, str] = {}
         if user_input is not None:
             self._data[CONF_ENABLE_HOURLY_CLOUDS_AND_WIND] = user_input[
                 CONF_ENABLE_HOURLY_CLOUDS_AND_WIND
             ]
             self._data[CONF_ENABLE_POOL] = user_input[CONF_ENABLE_POOL]
-            if user_input[CONF_ENABLE_POOL]:
+            if (
+                user_input[CONF_ENABLE_POOL]
+                and not user_input[CONF_ENABLE_HOURLY_CLOUDS_AND_WIND]
+            ):
+                errors[CONF_ENABLE_POOL] = "pool_requires_hourly_packages"
+            elif user_input[CONF_ENABLE_POOL]:
                 return await self.async_step_pool()
-            self._data.pop(CONF_POOL_VOLUME, None)
-            self._data.pop(CONF_POOL_PUMP_CAPACITY, None)
-            self._data.pop(CONF_POOL_CHLORINATOR_CAPACITY, None)
-            return await self._async_finalize()
+            else:
+                self._remove_pool_settings()
+                return await self._async_finalize()
 
         return self.async_show_form(
             step_id="hourly_packages",
@@ -394,6 +401,7 @@ class ForecastLocationSubentryFlowHandler(ConfigSubentryFlow):
                     ): selector.BooleanSelector(),
                 },
             ),
+            errors=errors,
             last_step=False,
         )
 
@@ -403,10 +411,18 @@ class ForecastLocationSubentryFlowHandler(ConfigSubentryFlow):
     ) -> SubentryFlowResult:
         """Collect the pool configuration for an hourly forecast."""
         if user_input is not None:
-            self._data[CONF_POOL_VOLUME] = user_input[CONF_POOL_VOLUME]
-            self._data[CONF_POOL_PUMP_CAPACITY] = user_input[CONF_POOL_PUMP_CAPACITY]
-            self._data[CONF_POOL_CHLORINATOR_CAPACITY] = user_input[
-                CONF_POOL_CHLORINATOR_CAPACITY
+            self._data[CONF_POOL_VOLUME_M3] = user_input[CONF_POOL_VOLUME_M3]
+            self._data[CONF_PUMP_NOMINAL_FLOW_M3H] = user_input[
+                CONF_PUMP_NOMINAL_FLOW_M3H
+            ]
+            self._data[CONF_HYDRAULIC_EFFICIENCY_FACTOR] = user_input[
+                CONF_HYDRAULIC_EFFICIENCY_FACTOR
+            ]
+            self._data[CONF_CHLORINATOR_OUTPUT_GH] = user_input[
+                CONF_CHLORINATOR_OUTPUT_GH
+            ]
+            self._data[CONF_TARGET_FREE_CHLORINE_PPM] = user_input[
+                CONF_TARGET_FREE_CHLORINE_PPM
             ]
             return await self._async_finalize()
 
@@ -420,8 +436,8 @@ class ForecastLocationSubentryFlowHandler(ConfigSubentryFlow):
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        CONF_POOL_VOLUME,
-                        default=self._data.get(CONF_POOL_VOLUME, vol.UNDEFINED),
+                        CONF_POOL_VOLUME_M3,
+                        default=self._data.get(CONF_POOL_VOLUME_M3, vol.UNDEFINED),
                     ): selector.NumberSelector(
                         selector.NumberSelectorConfig(
                             **positive_number_config,
@@ -429,8 +445,10 @@ class ForecastLocationSubentryFlowHandler(ConfigSubentryFlow):
                         ),
                     ),
                     vol.Required(
-                        CONF_POOL_PUMP_CAPACITY,
-                        default=self._data.get(CONF_POOL_PUMP_CAPACITY, vol.UNDEFINED),
+                        CONF_PUMP_NOMINAL_FLOW_M3H,
+                        default=self._data.get(
+                            CONF_PUMP_NOMINAL_FLOW_M3H, vol.UNDEFINED
+                        ),
                     ): selector.NumberSelector(
                         selector.NumberSelectorConfig(
                             **positive_number_config,
@@ -438,9 +456,23 @@ class ForecastLocationSubentryFlowHandler(ConfigSubentryFlow):
                         ),
                     ),
                     vol.Required(
-                        CONF_POOL_CHLORINATOR_CAPACITY,
+                        CONF_HYDRAULIC_EFFICIENCY_FACTOR,
                         default=self._data.get(
-                            CONF_POOL_CHLORINATOR_CAPACITY, vol.UNDEFINED
+                            CONF_HYDRAULIC_EFFICIENCY_FACTOR,
+                            DEFAULT_HYDRAULIC_EFFICIENCY_FACTOR,
+                        ),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=0.4,
+                            max=1.0,
+                            step=0.01,
+                            mode=selector.NumberSelectorMode.BOX,
+                        ),
+                    ),
+                    vol.Required(
+                        CONF_CHLORINATOR_OUTPUT_GH,
+                        default=self._data.get(
+                            CONF_CHLORINATOR_OUTPUT_GH, vol.UNDEFINED
                         ),
                     ): selector.NumberSelector(
                         selector.NumberSelectorConfig(
@@ -448,10 +480,33 @@ class ForecastLocationSubentryFlowHandler(ConfigSubentryFlow):
                             unit_of_measurement="g/h",
                         ),
                     ),
+                    vol.Required(
+                        CONF_TARGET_FREE_CHLORINE_PPM,
+                        default=self._data.get(
+                            CONF_TARGET_FREE_CHLORINE_PPM,
+                            DEFAULT_TARGET_FREE_CHLORINE_PPM,
+                        ),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            **positive_number_config,
+                            unit_of_measurement="ppm",
+                        ),
+                    ),
                 },
             ),
             last_step=True,
         )
+
+    def _remove_pool_settings(self) -> None:
+        """Remove pool values that no longer apply to this location."""
+        for key in (
+            CONF_POOL_VOLUME_M3,
+            CONF_PUMP_NOMINAL_FLOW_M3H,
+            CONF_HYDRAULIC_EFFICIENCY_FACTOR,
+            CONF_CHLORINATOR_OUTPUT_GH,
+            CONF_TARGET_FREE_CHLORINE_PPM,
+        ):
+            self._data.pop(key, None)
 
     async def _async_finalize(self) -> SubentryFlowResult:
         """Create or update the location subentry."""
