@@ -5,6 +5,11 @@ building weather-based operating-time indicators for pool and lawn equipment. It
 uses the [MeteoBlue](https://www.meteoblue.com/) Forecast and Account
 APIs to expose weather forecasts and API credit usage in Home Assistant.
 
+> [!IMPORTANT]
+> Pool-control and lawn-irrigation data is only available when the forecast type
+> is set to **Hourly** and **Additional hourly clouds and wind data** is enabled.
+> This adds MeteoBlue's `clouds-1h` and `wind-1h` packages to the hourly request.
+
 This project started as a fork of
 [HomeAssistant-MeteoBlue](https://github.com/dankeder/HomeAssistant-MeteoBlue)
 by Dan Keder. Attribution to the original project and other upstream components
@@ -96,7 +101,8 @@ Each location is a subentry on the API-key entry. Open the entry and choose
 | **Elevation** *(custom mode, optional)* | Meters above sea level. |
 | **Enable forecast** | Whether to create the weather entity. |
 | **Forecast type** | `daily` or `hourly`. Daily forecasts use MeteoBlue's `basic-day` package. Hourly forecasts always use `basic-1h`, and the integration also exposes a daily forecast that it derives locally from the hourly data. |
-| **Additional hourly clouds and wind data** | Only shown after choosing an enabled hourly forecast. When enabled, the hourly Forecast API call adds `clouds-1h` and `wind-1h`, producing `basic-1h_clouds-1h_wind-1h`. |
+| **Additional hourly clouds and wind data** | Only shown after choosing an enabled hourly forecast. This must be enabled to provide data for lawn-irrigation and pool-control calculations. The hourly Forecast API call adds `clouds-1h` and `wind-1h`, producing `basic-1h_clouds-1h_wind-1h`. |
+| **Pool configuration** *(hourly only, optional)* | Stores the pool volume (m³), pump capacity (m³/h), and chlorinator capacity (g/h) for future pool runtime calculations. Pool-control data requires **Additional hourly clouds and wind data** to be enabled. |
 | **Forecast update interval** | Minimum 6 hours, default 6 hours. |
 
 The 6-hour minimum reflects MeteoBlue's update cadence: forecast models run
@@ -111,7 +117,7 @@ For a location named *Home*, the integration creates:
 | -- | -- |
 | `weather.pool_and_lawn_home_weather` | Current conditions and forecast. Only created when **Enable forecast** is on. |
 | `sensor.pool_and_lawn_home_credits_used` | Total API credits consumed by your account, increasing over time. |
-| `sensor.pool_and_lawn_home_irrigation_level_0` | Irrigation need for today, from 0 to 5. Requires an hourly forecast. |
+| `sensor.pool_and_lawn_home_irrigation_level_0` | Irrigation need for today, from 0 to 5. Requires an hourly forecast with the `clouds-1h` and `wind-1h` packages enabled. |
 | `sensor.pool_and_lawn_home_irrigation_level_1` … `_6` | Irrigation need for the following six local forecast dates. Missing offsets remain unavailable. |
 
 ### Lawn irrigation need
@@ -192,7 +198,8 @@ Hourly forecasts always request `basic-1h`. If **Additional hourly clouds and
 wind data** is enabled, the integration requests `basic-1h_clouds-1h_wind-1h`
 in one Forecast API call so Home Assistant can receive hourly temperature,
 humidity, wind speed, wind gusts, precipitation, precipitation probability, and
-cloud coverage. Use the credits sensor and the MeteoBlue account dashboard to
+cloud coverage. This option is required for lawn-irrigation and pool-control
+data. Use the credits sensor and the MeteoBlue account dashboard to
 confirm the exact charge for your plan and API package combination.
 
 The weather entity exposes these values through Home Assistant's weather

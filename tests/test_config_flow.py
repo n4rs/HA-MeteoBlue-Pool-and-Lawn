@@ -30,8 +30,12 @@ from pool_and_lawn.config_flow import ForecastLocationSubentryFlowHandler
 from pool_and_lawn.const import (
     CONF_ENABLE_FORECAST,
     CONF_ENABLE_HOURLY_CLOUDS_AND_WIND,
+    CONF_ENABLE_POOL,
     CONF_FORECAST_TYPE,
     CONF_FORECAST_UPDATE_INTERVAL,
+    CONF_POOL_CHLORINATOR_CAPACITY,
+    CONF_POOL_PUMP_CAPACITY,
+    CONF_POOL_VOLUME,
     FORECAST_TYPE_DAILY,
     FORECAST_TYPE_HOURLY,
 )
@@ -80,6 +84,10 @@ async def test_forecast_step_skips_hourly_packages_for_daily(
 ) -> None:
     """Daily forecasts skip optional hourly package options."""
     forecast_flow._data[CONF_ENABLE_HOURLY_CLOUDS_AND_WIND] = True  # noqa: SLF001
+    forecast_flow._data[CONF_ENABLE_POOL] = True  # noqa: SLF001
+    forecast_flow._data[CONF_POOL_VOLUME] = 40  # noqa: SLF001
+    forecast_flow._data[CONF_POOL_PUMP_CAPACITY] = 10  # noqa: SLF001
+    forecast_flow._data[CONF_POOL_CHLORINATOR_CAPACITY] = 20  # noqa: SLF001
 
     result = await forecast_flow.async_step_forecast(
         {
@@ -91,6 +99,10 @@ async def test_forecast_step_skips_hourly_packages_for_daily(
 
     assert result["step_id"] == "finalize"
     assert CONF_ENABLE_HOURLY_CLOUDS_AND_WIND not in forecast_flow._data  # noqa: SLF001
+    assert CONF_ENABLE_POOL not in forecast_flow._data  # noqa: SLF001
+    assert CONF_POOL_VOLUME not in forecast_flow._data  # noqa: SLF001
+    assert CONF_POOL_PUMP_CAPACITY not in forecast_flow._data  # noqa: SLF001
+    assert CONF_POOL_CHLORINATOR_CAPACITY not in forecast_flow._data  # noqa: SLF001
 
 
 async def test_forecast_step_skips_hourly_packages_when_forecast_disabled(
@@ -113,11 +125,62 @@ async def test_forecast_step_skips_hourly_packages_when_forecast_disabled(
 
 async def test_hourly_packages_step_stores_selection(
     forecast_flow: ForecastLocationSubentryFlowHandler,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Optional hourly package selection is stored before continuing."""
+    """Optional hourly package selection is stored before the pool step."""
+
+    async def _pool() -> dict[str, Any]:
+        return {"type": "form", "step_id": "pool"}
+
+    monkeypatch.setattr(forecast_flow, "async_step_pool", _pool)
+
     result = await forecast_flow.async_step_hourly_packages(
-        {CONF_ENABLE_HOURLY_CLOUDS_AND_WIND: False}
+        {
+            CONF_ENABLE_HOURLY_CLOUDS_AND_WIND: False,
+            CONF_ENABLE_POOL: True,
+        }
+    )
+
+    assert result["step_id"] == "pool"
+    assert forecast_flow._data[CONF_ENABLE_HOURLY_CLOUDS_AND_WIND] is False  # noqa: SLF001
+    assert forecast_flow._data[CONF_ENABLE_POOL] is True  # noqa: SLF001
+
+
+async def test_hourly_packages_step_skips_pool_configuration(
+    forecast_flow: ForecastLocationSubentryFlowHandler,
+) -> None:
+    """Hourly forecasts can be configured without an associated pool."""
+    forecast_flow._data[CONF_POOL_VOLUME] = 40  # noqa: SLF001
+    forecast_flow._data[CONF_POOL_PUMP_CAPACITY] = 10  # noqa: SLF001
+    forecast_flow._data[CONF_POOL_CHLORINATOR_CAPACITY] = 20  # noqa: SLF001
+
+    result = await forecast_flow.async_step_hourly_packages(
+        {
+            CONF_ENABLE_HOURLY_CLOUDS_AND_WIND: True,
+            CONF_ENABLE_POOL: False,
+        }
     )
 
     assert result["step_id"] == "finalize"
-    assert forecast_flow._data[CONF_ENABLE_HOURLY_CLOUDS_AND_WIND] is False  # noqa: SLF001
+    assert forecast_flow._data[CONF_ENABLE_POOL] is False  # noqa: SLF001
+    assert CONF_POOL_VOLUME not in forecast_flow._data  # noqa: SLF001
+    assert CONF_POOL_PUMP_CAPACITY not in forecast_flow._data  # noqa: SLF001
+    assert CONF_POOL_CHLORINATOR_CAPACITY not in forecast_flow._data  # noqa: SLF001
+
+
+async def test_pool_step_stores_configuration(
+    forecast_flow: ForecastLocationSubentryFlowHandler,
+) -> None:
+    """Pool values are stored in the forecast location subentry."""
+    result = await forecast_flow.async_step_pool(
+        {
+            CONF_POOL_VOLUME: 42.5,
+            CONF_POOL_PUMP_CAPACITY: 9.5,
+            CONF_POOL_CHLORINATOR_CAPACITY: 18.0,
+        }
+    )
+
+    assert result["step_id"] == "finalize"
+    assert forecast_flow._data[CONF_POOL_VOLUME] == 42.5  # noqa: SLF001
+    assert forecast_flow._data[CONF_POOL_PUMP_CAPACITY] == 9.5  # noqa: SLF001
+    assert forecast_flow._data[CONF_POOL_CHLORINATOR_CAPACITY] == 18.0  # noqa: SLF001

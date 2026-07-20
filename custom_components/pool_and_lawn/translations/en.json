@@ -63,12 +63,27 @@
                     }
                 },
                 "hourly_packages": {
-                    "description": "Configure optional hourly forecast packages.",
+                    "description": "Configure optional hourly forecast and pool settings.",
                     "data": {
-                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
+                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data",
+                        "enable_pool": "Configure a pool"
                     },
                     "data_description": {
-                        "enable_hourly_clouds_and_wind": "Add the MeteoBlue clouds-1h and wind-1h packages to the basic-1h hourly request so cloud coverage and wind gusts can be exposed."
+                        "enable_hourly_clouds_and_wind": "Add the MeteoBlue clouds-1h and wind-1h packages to the basic-1h hourly request. This is required to provide data for lawn-irrigation and pool-control calculations.",
+                        "enable_pool": "Store the pool volume, pump capacity, and chlorinator capacity for future pool runtime calculations. Pool-control data requires the clouds-1h and wind-1h packages."
+                    }
+                },
+                "pool": {
+                    "description": "Configure the pool associated with this hourly forecast. These values will be stored for pool runtime calculations.",
+                    "data": {
+                        "pool_volume": "Pool volume",
+                        "pool_pump_capacity": "Pump capacity",
+                        "pool_chlorinator_capacity": "Chlorinator capacity"
+                    },
+                    "data_description": {
+                        "pool_volume": "Pool water volume in cubic metres (m³).",
+                        "pool_pump_capacity": "Pump flow capacity in cubic metres per hour (m³/h).",
+                        "pool_chlorinator_capacity": "Chlorinator production capacity in grams per hour (g/h)."
                     }
                 }
             },

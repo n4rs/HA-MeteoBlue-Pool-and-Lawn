@@ -52,9 +52,13 @@ from .api import (
 from .const import (
     CONF_ENABLE_FORECAST,
     CONF_ENABLE_HOURLY_CLOUDS_AND_WIND,
+    CONF_ENABLE_POOL,
     CONF_FORECAST_TYPE,
     CONF_FORECAST_UPDATE_INTERVAL,
     CONF_LOCATION_MODE,
+    CONF_POOL_CHLORINATOR_CAPACITY,
+    CONF_POOL_PUMP_CAPACITY,
+    CONF_POOL_VOLUME,
     DOMAIN,
     FORECAST_TYPE_DAILY,
     FORECAST_TYPE_HOURLY,
@@ -308,6 +312,10 @@ class ForecastLocationSubentryFlowHandler(ConfigSubentryFlow):
                 or user_input[CONF_FORECAST_TYPE] != FORECAST_TYPE_HOURLY
             ):
                 self._data.pop(CONF_ENABLE_HOURLY_CLOUDS_AND_WIND, None)
+                self._data.pop(CONF_ENABLE_POOL, None)
+                self._data.pop(CONF_POOL_VOLUME, None)
+                self._data.pop(CONF_POOL_PUMP_CAPACITY, None)
+                self._data.pop(CONF_POOL_CHLORINATOR_CAPACITY, None)
 
             if not errors:
                 if (
@@ -362,6 +370,12 @@ class ForecastLocationSubentryFlowHandler(ConfigSubentryFlow):
             self._data[CONF_ENABLE_HOURLY_CLOUDS_AND_WIND] = user_input[
                 CONF_ENABLE_HOURLY_CLOUDS_AND_WIND
             ]
+            self._data[CONF_ENABLE_POOL] = user_input[CONF_ENABLE_POOL]
+            if user_input[CONF_ENABLE_POOL]:
+                return await self.async_step_pool()
+            self._data.pop(CONF_POOL_VOLUME, None)
+            self._data.pop(CONF_POOL_PUMP_CAPACITY, None)
+            self._data.pop(CONF_POOL_CHLORINATOR_CAPACITY, None)
             return await self._async_finalize()
 
         return self.async_show_form(
@@ -374,6 +388,66 @@ class ForecastLocationSubentryFlowHandler(ConfigSubentryFlow):
                             CONF_ENABLE_HOURLY_CLOUDS_AND_WIND, True
                         ),
                     ): selector.BooleanSelector(),
+                    vol.Required(
+                        CONF_ENABLE_POOL,
+                        default=self._data.get(CONF_ENABLE_POOL, False),
+                    ): selector.BooleanSelector(),
+                },
+            ),
+            last_step=False,
+        )
+
+    async def async_step_pool(
+        self,
+        user_input: dict | None = None,
+    ) -> SubentryFlowResult:
+        """Collect the pool configuration for an hourly forecast."""
+        if user_input is not None:
+            self._data[CONF_POOL_VOLUME] = user_input[CONF_POOL_VOLUME]
+            self._data[CONF_POOL_PUMP_CAPACITY] = user_input[CONF_POOL_PUMP_CAPACITY]
+            self._data[CONF_POOL_CHLORINATOR_CAPACITY] = user_input[
+                CONF_POOL_CHLORINATOR_CAPACITY
+            ]
+            return await self._async_finalize()
+
+        positive_number_config = selector.NumberSelectorConfig(
+            min=0.1,
+            step=0.1,
+            mode=selector.NumberSelectorMode.BOX,
+        )
+        return self.async_show_form(
+            step_id="pool",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_POOL_VOLUME,
+                        default=self._data.get(CONF_POOL_VOLUME, vol.UNDEFINED),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            **positive_number_config,
+                            unit_of_measurement="m³",
+                        ),
+                    ),
+                    vol.Required(
+                        CONF_POOL_PUMP_CAPACITY,
+                        default=self._data.get(CONF_POOL_PUMP_CAPACITY, vol.UNDEFINED),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            **positive_number_config,
+                            unit_of_measurement="m³/h",
+                        ),
+                    ),
+                    vol.Required(
+                        CONF_POOL_CHLORINATOR_CAPACITY,
+                        default=self._data.get(
+                            CONF_POOL_CHLORINATOR_CAPACITY, vol.UNDEFINED
+                        ),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            **positive_number_config,
+                            unit_of_measurement="g/h",
+                        ),
+                    ),
                 },
             ),
             last_step=True,
