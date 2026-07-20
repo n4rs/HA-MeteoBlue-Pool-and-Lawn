@@ -12,18 +12,29 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from pool_and_lawn.const import (
+    CONF_CHLORINATOR_OUTPUT_GH,
+    CONF_ENABLE_HOURLY_CLOUDS_AND_WIND,
+    CONF_ENABLE_POOL,
     CONF_FORECAST_TYPE,
+    CONF_HYDRAULIC_EFFICIENCY_FACTOR,
     CONF_LOCATION_MODE,
+    CONF_POOL_VOLUME_M3,
+    CONF_PUMP_NOMINAL_FLOW_M3H,
+    CONF_TARGET_FREE_CHLORINE_PPM,
     FORECAST_TYPE_DAILY,
     FORECAST_TYPE_HOURLY,
     LOCATION_MODE_AUTO,
     SUBENTRY_TYPE_FORECAST_LOCATION,
 )
 from pool_and_lawn.irrigation import IrrigationForecastDay
+from pool_and_lawn.pool import PoolForecastDay
 from pool_and_lawn.sensor import (
     IRRIGATION_ENTITY_DESCRIPTIONS,
+    POOL_PUMP_ENTITY_DESCRIPTIONS,
     IrrigationForecastManager,
     MeteoBlueIrrigationLevel,
+    MeteoBluePoolPumpHours,
+    PoolForecastManager,
     async_setup_entry,
 )
 
@@ -107,8 +118,44 @@ def test_irrigation_entity_exposes_integer_and_calculation_attributes() -> None:
     assert entity.translation_placeholders == {}
 
 
+def test_pool_entity_has_stable_identity_hours_and_diagnostics() -> None:
+    """Pool entity identity uses location/offset and exposes hours plus diagnostics."""
+    subentry = SimpleNamespace(
+        subentry_id="pool-location",
+        title="Main Pool",
+        data={CONF_LOCATION_MODE: LOCATION_MODE_AUTO},
+    )
+    coordinator = _coordinator(subentry, {})
+    result = MagicMock()
+    result.recommended_pump_hours = 7.7
+    result.as_attributes.return_value = {
+        "forecast_date": "2026-07-20",
+        "forecast_day_offset": 1,
+        "calculation_type": "open_loop_weather_estimate",
+    }
+    manager = MagicMock(spec=PoolForecastManager)
+    manager.coordinator = coordinator
+    manager.get_day.return_value = PoolForecastDay(date(2026, 7, 20), 1, result)
+    entity = MeteoBluePoolPumpHours(
+        manager,
+        1,
+        POOL_PUMP_ENTITY_DESCRIPTIONS[1],
+    )
+
+    assert entity.unique_id == "pool-location-pool_pump_hours_1"
+    assert entity.entity_id == "sensor.pool_and_lawn_main_pool_pool_pump_hours_1"
+    assert entity.native_unit_of_measurement == "h"
+    assert entity.suggested_display_precision == 1
+    assert entity.native_value == 7.7
+    assert entity.available is True
+    assert entity.extra_state_attributes["calculation_type"] == (
+        "open_loop_weather_estimate"
+    )
+    assert entity.translation_placeholders == {"day_offset": "1"}
+
+
 @pytest.mark.asyncio
-async def test_setup_creates_seven_sensors_and_one_midnight_listener_per_location() -> (
+async def test_setup_creates_daily_sensors_and_one_midnight_listener_per_location() -> (
     None
 ):
     """Sensor setup has a fixed horizon and does not duplicate midnight listeners."""
@@ -119,6 +166,13 @@ async def test_setup_creates_seven_sensors_and_one_midnight_listener_per_locatio
         data={
             CONF_FORECAST_TYPE: FORECAST_TYPE_HOURLY,
             CONF_LOCATION_MODE: LOCATION_MODE_AUTO,
+            CONF_ENABLE_HOURLY_CLOUDS_AND_WIND: True,
+            CONF_ENABLE_POOL: True,
+            CONF_POOL_VOLUME_M3: 90,
+            CONF_PUMP_NOMINAL_FLOW_M3H: 21.5,
+            CONF_HYDRAULIC_EFFICIENCY_FACTOR: 0.75,
+            CONF_CHLORINATOR_OUTPUT_GH: 25,
+            CONF_TARGET_FREE_CHLORINE_PPM: 2,
         },
     )
     daily = SimpleNamespace(
@@ -157,7 +211,7 @@ async def test_setup_creates_seven_sensors_and_one_midnight_listener_per_locatio
     assert add_entities.call_count == 2
     hourly_entities = add_entities.call_args_list[0].args[0]
     daily_entities = add_entities.call_args_list[1].args[0]
-    assert len(hourly_entities) == 8  # credits plus seven stable irrigation offsets
+    assert len(hourly_entities) == 15  # credits plus seven irrigation and pool offsets
     assert len(daily_entities) == 1
     irrigation_entities = [
         entity
@@ -167,18 +221,27 @@ async def test_setup_creates_seven_sensors_and_one_midnight_listener_per_locatio
     assert [entity.forecast_day_offset for entity in irrigation_entities] == list(
         range(7)
     )
+    pool_entities = [
+        entity
+        for entity in hourly_entities
+        if isinstance(entity, MeteoBluePoolPumpHours)
+    ]
+    assert [entity.forecast_day_offset for entity in pool_entities] == list(range(7))
     track_time.assert_called_once()
     assert track_time.call_args.args[0] is hass
     assert track_time.call_args.kwargs == {"hour": 0, "minute": 0, "second": 0}
     entry.async_on_unload.assert_called_once_with(unsubscribe)
 
-    manager = irrigation_entities[0].manager
-    manager.invalidate = MagicMock()
-    for entity in irrigation_entities:
+    irrigation_manager = irrigation_entities[0].manager
+    pool_manager = pool_entities[0].manager
+    irrigation_manager.invalidate = MagicMock()
+    pool_manager.invalidate = MagicMock()
+    for entity in [*irrigation_entities, *pool_entities]:
         entity.async_write_ha_state = MagicMock()
     midnight_callback = track_time.call_args.args[1]
     midnight_callback(None)
 
-    manager.invalidate.assert_called_once_with()
-    for entity in irrigation_entities:
+    irrigation_manager.invalidate.assert_called_once_with()
+    pool_manager.invalidate.assert_called_once_with()
+    for entity in [*irrigation_entities, *pool_entities]:
         entity.async_write_ha_state.assert_called_once_with()

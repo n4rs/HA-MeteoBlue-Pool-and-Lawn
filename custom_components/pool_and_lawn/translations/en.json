@@ -63,18 +63,38 @@
                     }
                 },
                 "hourly_packages": {
-                    "description": "Configure optional hourly forecast packages.",
+                    "description": "Configure optional hourly forecast and pool settings.",
                     "data": {
-                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data"
+                        "enable_hourly_clouds_and_wind": "Additional hourly clouds and wind data",
+                        "enable_pool": "Configure a pool"
                     },
                     "data_description": {
-                        "enable_hourly_clouds_and_wind": "Add the MeteoBlue clouds-1h and wind-1h packages to the basic-1h hourly request so cloud coverage and wind gusts can be exposed."
+                        "enable_hourly_clouds_and_wind": "Add the MeteoBlue clouds-1h and wind-1h packages to the basic-1h hourly request. This is required to provide data for lawn-irrigation and pool-control calculations.",
+                        "enable_pool": "Store the pool volume, pump capacity, and chlorinator capacity for future pool runtime calculations. Pool-control data requires the clouds-1h and wind-1h packages."
+                    }
+                },
+                "pool": {
+                    "description": "Configure the saltwater pool associated with this hourly forecast. Recommended pump hours are an open-loop weather estimate, not a measurement or guarantee of actual free chlorine.",
+                    "data": {
+                        "pool_volume_m3": "Pool volume",
+                        "pump_nominal_flow_m3h": "Nominal pump flow",
+                        "hydraulic_efficiency_factor": "Hydraulic efficiency factor",
+                        "chlorinator_output_gh": "Nominal chlorinator output",
+                        "target_free_chlorine_ppm": "Daily free chlorine target"
+                    },
+                    "data_description": {
+                        "pool_volume_m3": "Pool water volume in cubic metres (m³). Must be greater than zero.",
+                        "pump_nominal_flow_m3h": "Nominal pump flow in cubic metres per hour (m³/h). Used only for hydraulic diagnostics, never as a runtime minimum.",
+                        "hydraulic_efficiency_factor": "Estimated effective-to-nominal flow ratio from 0.40 to 1.00. Used only for diagnostics; default 0.75.",
+                        "chlorinator_output_gh": "Chlorine production at 100% output in grams per hour (g/h).",
+                        "target_free_chlorine_ppm": "Assumed free chlorine at both the start and end of each day. Runtime replaces estimated daily loss; the target itself is not added to demand."
                     }
                 }
             },
             "error": {
                 "location_required": "Please pick a location, or switch to \"Use Home Assistant location\".",
-                "update_interval_too_short": "Update interval must be at least 6 hours."
+                "update_interval_too_short": "Update interval must be at least 6 hours.",
+                "pool_requires_hourly_packages": "Pool estimates require Additional hourly clouds and wind data to be enabled."
             },
             "abort": {
                 "already_configured": "This location is already configured.",
@@ -103,6 +123,12 @@
             },
             "irrigation_level_future": {
                 "name": "Irrigation level — In {day_offset} days"
+            },
+            "pool_pump_hours_today": {
+                "name": "Recommended pool pump hours — Today"
+            },
+            "pool_pump_hours_future": {
+                "name": "Recommended pool pump hours — In {day_offset} days"
             }
         }
     }
